@@ -1,0 +1,116 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+  <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+  <TITLE>
+    Vebjorn Ljosa
+  </TITLE>
+</HEAD>
+<BODY>
+
+<P><a href="http://www.ljosa.com/~ljosa/">Vebjorn Ljosa</a>
+
+<h1>CL-PNG</h1>
+
+<p>CL-PNG is a Common Lisp package for reading and writing PNG
+(Portable Network Graphics) files.  CL-PNG was originally written by
+Harald Musum, and is now maintained by <a
+href="http://www.ljosa.com/~ljosa/contact">Vebjorn Ljosa</a>.  New
+versions can be found at the CL-PNG homepage, <A
+href="http://www.ljosa.com/~ljosa/software/cl-png/">http://www.ljosa.com/~ljosa/software/cl-png/</a>.
+
+<p>Copyright (C) 2001--2004 by the authors (see the file <A
+href="code/cl-png-0.3/AUTHORS">AUTHORS</A>).  Licensed under the GNU
+Lesser General Public License; see the file <A
+href="code/cl-png-0.3/COPYING">COPYING</A> for details.
+
+<h2>Status</h2>
+
+<p>The PNG specification "PNG (Portable Network Graphics)
+Specification, Version 1.2", obtainable at <a
+href="http://www.libpng.org/pub/png/">http://www.libpng.org/pub/png/</a>,
+describes the different chunks that a PNG file format consists of.
+These are divided into critical chunks and auxiliary chunks.  All
+critical PNG chunks are supported for reading (so it should be
+possible to read all types of PNG images).  Writing images with sample
+depth 16 bits is not supported yet.
+
+<p>Previous versions of this library contained a Lisp implementation
+of the zlib compressed data format (defined in RFC 1950).
+Unfortunately, the implementation was very slow, particularly the
+compression function.  In the current version, the Lisp implementation
+has been replaced with UFFI bindings to libz.
+
+<p>I tested the performance of CL-PNG on Lispworks by decoding and
+encoding a 768 x 512 pixel RGB image with a depth of 8 bits per
+channel.  From version 0.2 to 0.3, the time to decode the image
+improved from 10 to 8 seconds.  The time to encode the image went down
+from 52 seconds to 6 seconds.  Improving the performance further is a
+major goal for future versions.
+
+<p>Please note that the interface is likely to change in future
+versions.
+
+
+<h2>Download</h2>
+
+<p>The laters version is 0.3, and can be downloaded here: <A
+href="http://www.ljosa.com/~ljosa/software/cl-png/download/cl-png-0.3.tar.gz">http://www.ljosa.com/~ljosa/software/cl-png/download/cl-png-0.3.tar.gz</A>.
+Older versions can be downloaded here: <A
+href="http://www.ljosa.com/~ljosa/software/cl-png/download/">http://www.ljosa.com/~ljosa/software/cl-png/download/</A>.
+
+<p>The individual source code files are available <A
+href="code/">here</A>, in case you would like to take a look at the
+code before downloading.
+
+
+<h2>Installation</h2>
+
+<p>Symlink the file png.asd to one of the directories in
+ASDF:*CENTRAL-REGISTRY*.  In order to compile and load CL-PNG, execute
+
+<pre>
+	(asdf:oos 'asdf:load-op '#:png)
+</pre>
+
+
+<h2>Decoding</h2>
+
+<pre>
+	(png:decode-file &lt;PNG-file&gt;)
+</pre>
+<p>decodes a file and returns an array with the result 
+<pre>
+	(png:decode-file &lt;PNG-file&gt; :output-file &lt;PPM-file&gt;)
+</pre>
+<p>decodes the file and writes the result to a PGM or PNM file so you can
+see the result with an external viewer.
+
+
+<h2>Encoding</h2>
+
+<p>ENCODE-FILE takes an image array (as produced by DECODE-FILE, for
+instance) and a file to write the result to as arguments:
+<pre>
+	(png:encode-file image-array &lt;PNG-file&gt;)
+</pre>
+<p>or
+<pre>
+	(png:encode-file (png:decode-file &lt;PNG-file&gt;) &lt;PNG-file&gt;) 
+</pre>
+<p>will write an image to &lt;PNG file&gt; (check the options to ENCODE-FILE to
+see the different combinations of bit depths and color types that are
+possible).
+
+<p>It is also possible to read from and to a stream with DECODE-STREAM
+and ENCODE-STREAM.
+
+<HR>
+
+<address>
+Last updated: 
+<!-- hhmts start -->2004-03-05<!-- hhmts end -->
+</address>
+
+</BODY>
+</HTML>
