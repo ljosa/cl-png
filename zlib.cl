@@ -1,25 +1,11 @@
-;;;; -*- Mode: Lisp; Package: User; -*-
-;;;; --------------------------------------------------------------------------
-;;;; File:          zlib.cl
-;;;; Description:   ZLIB implementation in Common Lisp
-;;;; Author:        Harald Musum <musum@pvv.org>
-;;;; Created:       2001-04-03
-;;;; Distribution:  See the accompanying file COPYING.
-;;;; --------------------------------------------------------------------------
-;;;;  (c) copyright 2001 by Harald Musum
-;;;;
-;;;; DOCUMENTATION
-;;;;
-;;;; 
-;;;; ZLIB is described in RFC 1950, DEFLATE in RFC 1951 
-;;;;
-;;;;
-;;;;
-;;;;
-;;;;
-;;;; BUGS
-;;;;
+;;; -*- Mode: Lisp; Package: User; -*-
+;;;
+;;; See the file README for copyright information.
+;;;
+;;; ZLIB implementation in Common Lisp.
+;;; ZLIB is described in RFC 1950, DEFLATE in RFC 1951 
 
+;;; BUGS:
 
 ; (encode-file (decode-test-png "pictures/basi4a08.png" nil) "temp"
 ; :color-type 4 :bit-depth 8 :filter-type 0) Works when we increase

@@ -1,84 +1,78 @@
-PNG is a Common Lisp package for reading and writing PNG (Portable
-Network Graphics) files.
+CL-PNG is a Common Lisp package for reading and writing PNG (Portable
+Network Graphics) files.  CL-PNG was originally written by Harald
+Musum, and is now maintained by Vebjorn Ljosa <vebjorn@ljosa.com>.
+New versions can be found at
+<URL:http://www.ljosa.com/~ljosa/software/cl-png/>.
+
+Copyright (C) 2001--2004 by the authors (see the file AUTHORS).
+Licensed under the GNU Lesser General Public License; see the file
+COPYING for details.
+
+
+Status
+------
 
 The PNG specification "PNG (Portable Network Graphics) Specification,
-Version 1.2", obtainable at http://www.libpng.org/pub/png/ describes
-the different chunks that a PNG file format consists of.  These are
-divided into critical chunks and auxiliary chunks.  All critical PNG
-chunks are supported for reading (so it should be possible to read all
-types of PNG images).  Writing images with sample depth 16 bits is not
-supported yet.
+Version 1.2", obtainable at <URL:http://www.libpng.org/pub/png/>,
+describes the different chunks that a PNG file format consists of.
+These are divided into critical chunks and auxiliary chunks.  All
+critical PNG chunks are supported for reading (so it should be
+possible to read all types of PNG images).  Writing images with sample
+depth 16 bits is not supported yet.
 
-Since PNG uses the zlib compressed data format (defined in RFC 1950)
-to compress some of the PNG chunks, I have made an implementation of
-this library in Common Lisp (see the file zlib.cl).  This library can
-decode all three types of compressed data that are defined in the
-deflate compressed data format (which is the low-level compression
-method used by zlib) (see RFC 1951), but can only encode data in two
-of the three possible encoding schemes.  The scheme that offers most
-compression, but also is the slowest and most complicated, is not
-implemented yet.
+Previous versions of this library contained a Lisp implementation of
+the zlib compressed data format (defined in RFC 1950).  Unfortunately,
+the implementation was very slow, particularly the compression
+function.  In the current version, the Lisp implementation has been
+replaced with UFFI bindings to libz.
 
+I tested the performance of CL-PNG on Lispworks by decoding and
+encoding a 768 x 512 pixel RGB image with a depth of 8 bits per
+channel.  From version 0.2 to 0.3, the time to decode the image
+improved from 10 to 8 seconds.  The time to encode the image went down
+from 52 seconds to 6 seconds.
 
-
-Availability
-------------
-
-New versions of this software can be found at:
-http://www.pvv.org/~musum/lisp/
-
+Decoding the image took around 10 seconds with version 0.2
+and around 8 seconds with version 0.3.  
 
 
 Installation
 ------------
 
-This software requires that DEFSYSTEM (I have used defsystem.lisp from
-CLOCC (http://clocc.sourceforge.net) is loaded.
+Symlink the file png.asd to one of the directories in
+ASDF:*CENTRAL-REGISTRY*.  In order to compile and load CL-PNG, execute
 
-
-1. Load the system definition file:
-
-   (load "png.system")
-
-2. Compile and load the system:
-
-   (make:operate-on-system "png" :compile)
-
+	(asdf:oos 'asdf:load-op '#:png)
 
 
 Decoding
-------------
+--------
 
-(png:decode-file <PNG-file>)
+	(png:decode-file <PNG-file>)
 
 decodes a file and returns an array with the result 
 
-(png:decode-file <PNG-file> :output-file <PPM-file>)
+	(png:decode-file <PNG-file> :output-file <PPM-file>)
 
 decodes the file and writes the result to a PGM or PNM file so you can
 see the result with an external viewer.
 
 
 Encoding
-------------
+--------
 
 ENCODE-FILE takes an image array (as produced by DECODE-FILE, for
 instance) and a file to write the result to as arguments:
 
-(png:encode-file image-array <PNG-file>)
+	(png:encode-file image-array <PNG-file>)
 
 or
 
-(png:encode-file (png:decode-file <PNG-file>) <PNG-file>) 
+	(png:encode-file (png:decode-file <PNG-file>) <PNG-file>) 
 
 will write an image to <PNG file> (check the options to ENCODE-FILE to
 see the different combinations of bit depths and color types that are
 possible).
 
-
 It is also possible to read from and to a stream with DECODE-STREAM
 and ENCODE-STREAM.
-
-
-Harald Musum
-musum@pvv.org

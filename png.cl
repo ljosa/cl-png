@@ -1,19 +1,6 @@
-;;;; -*- Mode: Lisp; Package: PNG; -*-
-;;;; --------------------------------------------------------------------------
-;;;; File:          png.cl
-;;;; Description:   A program to decode and encode PNG files
-;;;; Author:        Harald Musum <musum@pvv.org>
-;;;; Created:       2001-01-17
-;;;; Distribution:  See the accompanying file COPYING.
-;;;; --------------------------------------------------------------------------
-;;;;  (c) copyright 2001 by Harald Musum
-;;;;
-;;;; $Id: png.cl,v 1.7 2004-03-05 19:30:11 ljosa Exp $
-;;;;
-;;;; DOCUMENTATION
-;;;;
-;;;; See the file README.
-;;;; 
+;;; -*- Mode: Lisp; Package: PNG; -*-
+;;;
+;;; See the file README for documentation and copyright information.
 
 (in-package #:png)
 
@@ -719,7 +706,7 @@ data if the CRCs are equal, else return an error"
 
 ;;; Writing PNG files
 
-(defun encode-stream (source stream &key (filter-type 4) (btype 1)
+(defun encode-stream (source stream &key (filter-type 4)
 		      (bit-depth 8) (color-type 2) (source-bit-depth 8)
 		      (interlace-method 0))
   (let* ((compression-method 0)
@@ -787,9 +774,9 @@ data if the CRCs are equal, else return an error"
 		do
 		(setf (subseq idat (* i line-length) (* (1+ i) line-length))
 		      (if plte-hash-table
-			  (read-pixel source line i width filter-type
+			  (read-pixel source line i width
 				      color-type bit-depth plte-hash-table)
-			(read-pixel source line i width filter-type
+			(read-pixel source line i width
 				    color-type bit-depth))))
 	  (loop for i from 0 below height
 		with previous-line-index = nil
@@ -821,7 +808,6 @@ data if the CRCs are equal, else return an error"
 	    with bytes-per-pixel = (bytes-per-pixel ihdr)
 	    ;; Add one because the first byte represents filter method
 	    for line-length = (1+ (* (ceiling width dx) bytes-per-pixel))
-	    for previous-line-index = nil
 	    with index fixnum = 0
 	    do
 ;            (format t "~&----------------------~%")
@@ -889,21 +875,21 @@ data if the CRCs are equal, else return an error"
       (debug-format-1 "~&Writing PLTE chunk.~%")
       (write-plte stream plte-hash-table))
     (debug-format-1 "~&Writing IDAT chunk.~%")
-    (encode-idat idat btype #'write-idat stream)
+    (encode-idat idat #'write-idat stream)
     (debug-format-1 "~&Writing tEXt chunk.~%")
     (write-text stream text)
     (debug-format-1 "~&Writing IEND chunk.~%")
     (write-iend stream)
     (debug-format-1 "~&Image written to file ~A.~%" (pathname stream))))
 
-(defun encode-file (source output-file &key (filter-type 4) (btype 1)
+(defun encode-file (source output-file &key (filter-type 4)
 		    (bit-depth 8) (color-type 2) (source-bit-depth 8)
 		    (interlace-method 0))
   (with-open-file (stream output-file
 			  :direction :output
 			  :if-exists :supersede
 			  :element-type '(unsigned-byte 8))
-    (encode-stream source stream :filter-type filter-type :btype btype
+    (encode-stream source stream :filter-type filter-type
 		   :bit-depth bit-depth :color-type color-type
 		   :source-bit-depth source-bit-depth
 		   :interlace-method interlace-method)))
@@ -980,7 +966,7 @@ data if the CRCs are equal, else return an error"
     ;; character and that the length of them are not too large.
     (write-chunk stream text)))
 
-(defun encode-idat (idat btype writer-function stream)
+(defun encode-idat (idat writer-function stream)
   (funcall writer-function
            stream
            (zlib-from-cl-pdf:compress-string (map 'string #'code-char idat))))
@@ -1000,7 +986,7 @@ data if the CRCs are equal, else return an error"
 	       (pixel-value source x y bit-depth 16)
 	       (pixel-value source x y bit-depth 24)))))
 
-(defun read-pixel (source line i width filter-type color-type
+(defun read-pixel (source line i width color-type
 		   bit-depth &optional plte-hash-table)
   "Read each pixel from source array and write it to a scanline"
   (ecase color-type
