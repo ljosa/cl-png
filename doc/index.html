@@ -20,9 +20,9 @@ versions can be found at the CL-PNG homepage, <A
 href="http://www.ljosa.com/~ljosa/software/cl-png/">http://www.ljosa.com/~ljosa/software/cl-png/</a>.
 
 <p>Copyright (C) 2001--2004 by the authors (see the file <A
-href="code/cl-png-0.3/AUTHORS">AUTHORS</A>).  Licensed under the GNU
+href="code/cl-png-0.4/AUTHORS">AUTHORS</A>).  Licensed under the GNU
 Lesser General Public License; see the file <A
-href="code/cl-png-0.3/COPYING">COPYING</A> for details.
+href="code/cl-png-0.4/COPYING">COPYING</A> for details.
 
 <h2>Status</h2>
 
@@ -43,10 +43,17 @@ has been replaced with UFFI bindings to libz.
 
 <p>I tested the performance of CL-PNG on Lispworks by decoding and
 encoding a 768 x 512 pixel RGB image with a depth of 8 bits per
-channel.  From version 0.2 to 0.3, the time to decode the image
-improved from 10 to 8 seconds.  The time to encode the image went down
-from 52 seconds to 6 seconds.  Improving the performance further is a
-major goal for future versions.
+channel.  From version 0.2 to 0.4, the time to decode the image stayed
+the same at about 7 seconds.  The time to encode the image went down
+from 45 seconds to 3.7 seconds.
+
+<p>I also tested the performance on CMUCL.  Here, from version 0.2 to
+0.4, the time to decode stayed the same (well, it went down from
+1.2&nbsp;s to 1.0&nbsp;s), whereas the time to encode went down from
+8.9&nbsp;s to 2.4&nbsp;s.
+
+<p>Improving the performance further is a major goal for future
+versions.
 
 <p>Please note that the interface is likely to change in future
 versions.
@@ -54,8 +61,8 @@ versions.
 
 <h2>Download</h2>
 
-<p>The laters version is 0.3, and can be downloaded here: <A
-href="http://www.ljosa.com/~ljosa/software/cl-png/download/cl-png-0.3.tar.gz">http://www.ljosa.com/~ljosa/software/cl-png/download/cl-png-0.3.tar.gz</A>.
+<p>The laters version is 0.4, and can be downloaded here: <A
+href="http://www.ljosa.com/~ljosa/software/cl-png/download/cl-png-0.4.tar.gz">http://www.ljosa.com/~ljosa/software/cl-png/download/cl-png-0.4.tar.gz</A>.
 Older versions can be downloaded here: <A
 href="http://www.ljosa.com/~ljosa/software/cl-png/download/">http://www.ljosa.com/~ljosa/software/cl-png/download/</A>.
 
@@ -109,7 +116,7 @@ and ENCODE-STREAM.
 
 <address>
 Last updated: 
-<!-- hhmts start -->2004-03-05<!-- hhmts end -->
+<!-- hhmts start -->2004-03-06<!-- hhmts end -->
 </address>
 
 </BODY>
