@@ -837,7 +837,6 @@ store the result in RESULT"
 
 
 
-
 (defun encode-buffer (buffer btype writer-function stream)
   "Encode BUFFER with deflate algorithm of type BTYPE.
 WRITER-FUNCTION should be a function that can write a block at a time

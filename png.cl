@@ -1,4 +1,4 @@
-;;;; -*- Mode: Lisp; Package: User; -*-
+;;;; -*- Mode: Lisp; Package: PNG; -*-
 ;;;; --------------------------------------------------------------------------
 ;;;; File:          png.cl
 ;;;; Description:   A program to decode and encode PNG files
@@ -8,7 +8,7 @@
 ;;;; --------------------------------------------------------------------------
 ;;;;  (c) copyright 2001 by Harald Musum
 ;;;;
-;;;; $Id: png.cl,v 1.3 2004-03-05 04:03:32 ljosa Exp $
+;;;; $Id: png.cl,v 1.4 2004-03-05 04:10:56 ljosa Exp $
 ;;;;
 ;;;; DOCUMENTATION
 ;;;;
@@ -130,8 +130,8 @@
 
 (defun update-crc (crc buffer)
   (declare (type (unsigned-byte 32) crc)
-           (type (simple-array (unsigned-byte 8)) buffer)
-           (optimize speed))
+           (type (simple-array (signed-byte 8) (*)) buffer)
+           (optimize (speed 3) (safety 0)))
   (setq crc (logxor crc #xffffffff))
   (loop for n from 0 below (length buffer)
 	for i = (logand #xff (logxor crc (aref buffer n)))
@@ -1007,18 +1007,19 @@ data if the CRCs are equal, else return an error"
 	(setf (aref array (+ start i)) (ldb (byte 8 (* 8 (- 3 i))) value))))
 
 
-(defun write-chunk (stream data)
-  (write-32-bits-value stream (- (length data) 4))
-  (write-sequence data stream)
-  (write-32-bits-value stream (crc data)))
-
+(defun write-chunk (stream data &optional tag)
+  (let ((length (if tag (length data) (- (length data) 4)))
+        (checksum 0))
+    (write-32-bits-value stream length)
+    (when tag
+      (write-sequence tag stream)
+      (setf checksum (update-crc checksum tag)))
+    (write-sequence data stream)
+    (write-32-bits-value stream (update-crc checksum data))))
 
 
 (defun write-idat (stream idat)
-  (let ((array (concatenate '(vector (unsigned-byte 8) *)
-			    (map 'vector #'char-code "IDAT")
-			    idat)))
-    (write-chunk stream array)))
+  (write-chunk stream idat "IDAT"))
 
 
 (defun write-ihdr (stream ihdr)
@@ -1037,9 +1038,7 @@ data if the CRCs are equal, else return an error"
 
 
 (defun write-iend (stream)
-  (write-chunk stream (make-array 4
-				  :element-type '(unsigned-byte 8)
-				  :initial-contents (map 'vector #'char-code "IEND"))))
+  (write-chunk stream "IEND"))
 
 
 (defun write-plte (stream plte-hash-table)
@@ -1078,7 +1077,9 @@ data if the CRCs are equal, else return an error"
 
 
 (defun encode-idat (idat btype writer-function stream)
-  (encode-buffer idat btype writer-function stream))
+  (funcall writer-function
+           stream
+           (zlib-from-cl-pdf:compress-string (map 'string #'code-char idat))))
 
 
 

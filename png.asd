@@ -5,11 +5,13 @@
 (defsystem :png
   :perform (load-op :after (op png)
 		    (pushnew :png cl:*features*))
-  :components ((:file "zlib")
+  :components ((:file "zlib-from-cl-pdf")
+               (:file "zlib" :depends-on ("zlib-from-cl-pdf"))
 	       (:file "png-pkg"
 		      :depends-on ("zlib"))
 	       (:file "png"
-		      :depends-on ("png-pkg" "zlib"))))
+		      :depends-on ("png-pkg" "zlib")))
+  :depends-on (#:uffi))
 
 (defmethod source-file-type ((c cl-source-file) (s (eql (find-system :png))))
   "cl")
