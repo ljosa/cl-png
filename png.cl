@@ -8,7 +8,7 @@
 ;;;; --------------------------------------------------------------------------
 ;;;;  (c) copyright 2001 by Harald Musum
 ;;;;
-;;;; $Id: png.cl,v 1.4 2004-03-05 04:10:56 ljosa Exp $
+;;;; $Id: png.cl,v 1.5 2004-03-05 17:30:50 ljosa Exp $
 ;;;;
 ;;;; DOCUMENTATION
 ;;;;
@@ -416,23 +416,12 @@ data if the CRCs are equal, else return an error"
 	(write-byte (ldb (byte 8 8) (aref image i j)) stream)
 	(write-byte (ldb (byte 8 16) (aref image i j)) stream)))))
 
-
 (defun write-pnm (image output-file width height comment color-type bit-depth)
   (let ((comment (concatenate 'string "Source file: " (file-namestring comment)))
 	(16-bit (= bit-depth 16)))
     (if (or (= color-type 0) (= color-type 4))
-        (write-pgm image (if (stringp output-file) output-file "pgm") width
-                   height comment 16-bit)
-;        (write-raw-pgm image (if (stringp output-file) output-file "pgm") width
-;                       height comment)
-      (write-ppm image (if (stringp output-file) output-file "ppm") width
-                 height comment 16-bit))))
-;        (write-raw-ppm image (if (stringp output-file) output-file "ppm") width
-;                       height comment))))
-
-
-
-
+        (write-pgm image output-file width height comment 16-bit)
+      (write-ppm image output-file width height comment 16-bit))))
 
 (defun read-signature (stream)
   "Read PNG signature and return t if correct, else return nil"
