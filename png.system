@@ -1,9 +1,9 @@
-;;;; -*- Mode: Lisp; Syntax: Common-Lisp; Package: PNG; -*-
+;;;; -*- Mode: Lisp; Package: User; -*-
 
 ;;; This package contains an implementation of parts of the PNG
 ;;; specification, version 1.2.
 ;;;
-;;; See file README for more info.
+;;; See the file README for more info.
 ;;;
 ;;; Author: Harald Musum
 ;;;

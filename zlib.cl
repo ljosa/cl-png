@@ -151,7 +151,7 @@
 
 
 
-(defparameter *debug-level* 1)
+(defparameter *debug-level* 0)
 (defparameter *debug-stream* t)
 
 

@@ -13,6 +13,8 @@
   (:import-from "ZLIB" "ENCODE-BUFFER" "DECODE-BUFFER")
   (:export "DECODE-FILE"
 	   "ENCODE-FILE"
+	   "DECODE-STREAM"
+	   "ENCODE-STREAM"
 	   "IMAGE-SIZE"))
 
 

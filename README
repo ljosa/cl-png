@@ -3,19 +3,11 @@ Network Graphics) files.
 
 The PNG specification "PNG (Portable Network Graphics) Specification,
 Version 1.2", obtainable at http://www.libpng.org/pub/png/ describes
-the different "chunks" that a PNG file format consists of.  These are
+the different chunks that a PNG file format consists of.  These are
 divided into critical chunks and auxiliary chunks.  All critical PNG
 chunks are supported for reading (so it should be possible to read all
-types of PNG images).  For writing, the following properties of the
-IDAT chunk are not yet implemented:
-
- * Interlacing.
- 
- * Images with sample depth 16 bits.
-
-
-In addition, some of the other properties of the IDAT chunk are not
-tested very much.
+types of PNG images).  Writing images with sample depth 16 bits is not
+supported yet.
 
 Since PNG uses the zlib compressed data format (defined in RFC 1950)
 to compress some of the PNG chunks, I have made an implementation of
@@ -83,3 +75,10 @@ will write an image to <PNG file> (check the options to ENCODE-FILE to
 see the different combinations of bit depths and color types that are
 possible).
 
+
+It is also possible to read from and to a stream with DECODE-STREAM
+and ENCODE-STREAM.
+
+
+Harald Musum
+musum@pvv.org

@@ -8,7 +8,7 @@
 ;;;; --------------------------------------------------------------------------
 ;;;;  (c) copyright 2001 by Harald Musum
 ;;;;
-;;;; $Id: png.cl,v 1.1.1.1 2004-03-05 03:56:43 ljosa Exp $
+;;;; $Id: png.cl,v 1.2 2004-03-05 03:57:54 ljosa Exp $
 ;;;;
 ;;;; DOCUMENTATION
 ;;;;
@@ -46,7 +46,7 @@
 
 
 (defconstant +png-major-version+ 0)
-(defconstant +png-minor-version+ 1)
+(defconstant +png-minor-version+ 2)
 
 (defconstant +png-signature+ #(137 80 78 71 13 10 26 10))
 
@@ -301,6 +301,7 @@ data if the CRCs are equal, else return an error"
 	   (type fixnum index length)
 	   (type (unsigned-byte 8) filter-type bytes-per-pixel)
 	   (optimize speed))
+  (setf (aref filtered-line 0) filter-type)
   (loop for i fixnum from 1 below length
 	;; left-index is the index of the pixel to the left of the
 	;; current one
@@ -443,7 +444,8 @@ data if the CRCs are equal, else return an error"
   "Compute the size of the array to store the IDAT chunks in."
   (if (= (ihdr-interlace-method ihdr) 0)
       (* (ihdr-height ihdr) (line-length ihdr))
-      ;; FIXME.  Is this correct for 16 bit images too?
+      ;; FIXME.  Is this correct for 16 bit images?  And is it correct
+      ;; at all (gives 1116 instead of 1084 for the test images)
     (+ (* (ihdr-height ihdr) (line-length ihdr)) (* (ceiling (ihdr-height ihdr) 8) 15))))
 
 
@@ -799,130 +801,194 @@ data if the CRCs are equal, else return an error"
 
 
 (defun encode-stream (source stream &key (filter-type 4) (btype 1)
-		      (bit-depth 8) (color-type 2) (source-bit-depth 8))
+		      (bit-depth 8) (color-type 2) (source-bit-depth 8)
+		      (interlace-method 0))
   (let* ((compression-method 0)
-	   (filter-method 0)
-	   (interlace-method 0)
-	   (height (array-dimension source 0))
-	   (width (array-dimension source 1))
-	   (ihdr (make-ihdr :width width
-			    :height height
-			    :bit-depth bit-depth
-			    :color-type color-type
-			    :compression-method compression-method
-			    :filter-method filter-method
-			    :interlace-method interlace-method))
-	   (text (list "Software"
-		       (format nil "CL PNG library, version ~D.~D."
-			       +png-major-version+
-			       +png-minor-version+)))
-	   (plte-hash-table nil)
-	   (line-length (line-length ihdr))
-	   ;; Add one byte per line to for the filter type
-	   (idat (make-array (* height line-length)
-			     :initial-element 0
-			     :element-type '(unsigned-byte 8)))
-	   (line (make-array line-length :element-type '(unsigned-byte 8))))
-      (check-type (ihdr-bit-depth ihdr) bit-depth)
-      (check-type (ihdr-color-type ihdr) color-type)
-      (check-type (ihdr-compression-method ihdr) (integer 0))
-      (check-type (ihdr-compression-method ihdr) (integer 0))
-      (check-type (ihdr-filter-method ihdr) (integer 0))
-      (check-type (ihdr-interlace-method ihdr) (integer 0 1))
+	 (filter-method 0)
+	 (height (array-dimension source 0))
+	 (width (array-dimension source 1))
+	 (ihdr (make-ihdr :width width
+			  :height height
+			  :bit-depth bit-depth
+			  :color-type color-type
+			  :compression-method compression-method
+			  :filter-method filter-method
+			  :interlace-method interlace-method))
+	 (text (list "Software"
+		     (format nil "CL PNG library, version ~D.~D."
+			     +png-major-version+
+			     +png-minor-version+)))
+	 (plte-hash-table nil)
+	 (line-length (line-length ihdr))
+	 ;; Add one byte per line to for the filter type
+	 (idat (if (= interlace-method 0)
+		   (make-array (* height line-length)
+			       :initial-element 0
+			       :element-type '(unsigned-byte 8))
+                 (make-array 0
+			     :fill-pointer 0
+			     :adjustable t
+			     :element-type '(unsigned-byte 8))))
+	 (line (make-array line-length :element-type '(unsigned-byte 8))))
+    (check-type (ihdr-bit-depth ihdr) bit-depth)
+    (check-type (ihdr-color-type ihdr) color-type)
+    (check-type (ihdr-compression-method ihdr) (integer 0))
+    (check-type (ihdr-compression-method ihdr) (integer 0))
+    (check-type (ihdr-filter-method ihdr) (integer 0))
+    (check-type (ihdr-interlace-method ihdr) (integer 0 1))
 
-      (when (= source-bit-depth 16)
-	(loop for i from 0 below (* width height)
-	      for red = (ldb (byte 16 0) (row-major-aref source i))
-	      for green = (ldb (byte 16 16) (row-major-aref source i))
-	      for blue = (ldb (byte 16 32) (row-major-aref source i))
-	      for alpha = (ldb (byte 16 48) (row-major-aref source i))
-	      for result = 0
-	      do
-;              (debug-format-1 "~&red ~D.~%" (ash red -8))
-;              (debug-format-1 "~&green ~D.~%" (ash green -8))
-;              (debug-format-1 "~&blue ~D.~%" (ash blue -8))
-;              (debug-format-1 "~&alpha ~D.~%" (ash alpha -8))
-              (setq result (dpb (ash red -8) (byte 8 0)
-				(dpb (ash green -8) (byte 8 8)
-				     (dpb (ash blue -8) (byte 8 16)
-					  (dpb (ash alpha -8) (byte 8 24) result)))))
-;	      (debug-format-1 "~&result ~D.~%" result)
-	      (setf (row-major-aref source i) result)))
-
+    ;; FIXME.  Convert to 8 bit for now, since we don't support
+    ;; encoding 16 bit images
+    (when (= source-bit-depth 16)
+      (loop for i from 0 below (* width height)
+	    for red = (ldb (byte 16 0) (row-major-aref source i))
+	    for green = (ldb (byte 16 16) (row-major-aref source i))
+	    for blue = (ldb (byte 16 32) (row-major-aref source i))
+	    for alpha = (ldb (byte 16 48) (row-major-aref source i))
+	    ;; FIXME.  Use with instead of for?
+	    for result = 0
+	    do
+	    (setq result (dpb (ash red -8) (byte 8 0)
+			      (dpb (ash green -8) (byte 8 8)
+				   (dpb (ash blue -8) (byte 8 16)
+					(dpb (ash alpha -8) (byte 8 24) result)))))
+	    (setf (row-major-aref source i) result)))
       
-      (unless (member (list color-type bit-depth)
-		      +bit-depth-and-color-type-combination+ :test #'equal)
-	(error "~&This combination of color-type (~A) and bit-depth (~A) is illegal."
-	       color-type bit-depth))
-      (debug-format-1 "~&Encoding image.~%")
-      (when (>= *debug-level* 1) (print ihdr))
-;      (format t "~&line-length: ~A~%" line-length)
-;      (print (type-of idat))
-      (when (= color-type 3)
-	(setq plte-hash-table (make-plte-hash-table source)))
-;	(print plte-hash-table))
-      (loop for i from 0 below height
+    (unless (member (list color-type bit-depth)
+		    +bit-depth-and-color-type-combination+ :test #'equal)
+      (error "~&This combination of color-type (~A) and bit-depth (~A) is illegal."
+	     color-type bit-depth))
+    (debug-format-1 "~&Encoding image.~%")
+    (when (>= *debug-level* 1) (print ihdr))
+    (when (= color-type 3)
+      (setq plte-hash-table (make-plte-hash-table source)))
+    (if (= interlace-method 0)
+	(progn
+	  (loop for i from 0 below height
+		do
+		(setf (subseq idat (* i line-length) (* (1+ i) line-length))
+		      (if plte-hash-table
+			  (read-pixel source line i width filter-type
+				      color-type bit-depth plte-hash-table)
+			(read-pixel source line i width filter-type
+				    color-type bit-depth))))
+	  (loop for i from 0 below height
+		with previous-line-index = nil
+		with index = 0
+		with filtered-line1 = (make-array line-length
+						  :element-type '(unsigned-byte 8))
+		with filtered-line2 = (make-array line-length
+						  :element-type '(unsigned-byte 8))
+		do
+		(apply-filter idat filtered-line1 filter-type index previous-line-index
+			      line-length (bytes-per-pixel ihdr))
+		(when (> i 0)
+		  (replace idat filtered-line2 :start1 (- index line-length)
+			   :end1 index)
+		  ;; Special case for the last line
+		  (when (= i (1- height))
+		    (replace idat filtered-line1 :start1 index
+			     :end1 (+ line-length index))))
+		(replace filtered-line2 filtered-line1)
+		(setq previous-line-index index)
+		(incf index line-length)))
+          
+	;; Interlace method 1
+      (loop for j fixnum from 1 to 7
+	    for x0 fixnum in '(0 4 0 2 0 1 0)
+	    for dx fixnum in '(8 8 4 4 2 2 1)
+	    for y0 fixnum in '(0 0 4 0 2 0 1)
+	    for dy fixnum in '(8 8 8 4 4 2 2)
+	    with bytes-per-pixel = (bytes-per-pixel ihdr)
+	    ;; Add one because the first byte represents filter method
+	    for line-length = (1+ (* (ceiling width dx) bytes-per-pixel))
+	    for previous-line-index = nil
+	    with index fixnum = 0
 	    do
-;            (format t "~&Indices: ~D,~D,~D~%"
-;                      (1+ (* j 3)) (+ (* j 3) 2) (+ (* j 3) 3))
-	    (setf (subseq idat (* i line-length) (* (1+ i) line-length))
-		  (if plte-hash-table
-		      (read-pixel source line i width filter-type
-				  color-type bit-depth plte-hash-table)
-		    (read-pixel source line i width filter-type
-				color-type bit-depth))))
-;	    (format t "~&Line: ~8b" (subseq idat (* i line-length) (* (1+ i) line-length))))
-;      (print idat)
-      (loop for i from 0 below height
-	    with previous-line-index = nil
-	    with index = 0
-	    with filtered-line1 = (make-array line-length
-					      :element-type '(unsigned-byte 8)
-					      :initial-element filter-type)
-	    with filtered-line2 = (make-array line-length
-					      :element-type '(unsigned-byte 8)
-					      :initial-element filter-type)
-	    do
-;            (format t "~&Line ~D before filtering: ~A~%"
-;                    i (subseq idat index (+ index line-length)))
-	    (apply-filter idat filtered-line1 filter-type index previous-line-index
-			  line-length (bytes-per-pixel ihdr))
-;	    (format t "~&Line ~D after filtering: ~A~%" i filtered-line1)
-	    (when (> i 0)
-	      (replace idat filtered-line2 :start1 (- index  (* 1 line-length))
-		       :end1 (+ line-length (- index (* 1 line-length))))
-	      ;; Special case for the last line
-	      (when (= i (1- height))
-		(replace idat filtered-line1 :start1 index
-			 :end1 (+ line-length index))))
-	    (replace filtered-line2 filtered-line1)
-	    (setq previous-line-index index)
-      	    (incf index line-length))
-      (debug-format-1 "~&Writing PNG signature.~%")
-      (write-sequence +png-signature+ stream)
-      (debug-format-1 "~&Writing IHDR chunk.~%")
-      (write-ihdr stream ihdr)
-      (when (= color-type 3)
-	(debug-format-1 "~&Writing PLTE chunk.~%")
-	(write-plte stream plte-hash-table))
-      (debug-format-1 "~&Writing IDAT chunk.~%")
-      (encode-idat idat btype #'write-idat stream)
-      (debug-format-1 "~&Writing tEXt chunk.~%")
-      (write-text stream text)
-      (debug-format-1 "~&Writing IEND chunk.~%")
-      (write-iend stream)
-      (debug-format-1 "~&Image written to file ~A.~%" (pathname stream))))
+;            (format t "~&----------------------~%")
+;            (format t "~&Pass ~D~%" j)
+;            (format t "~&line-length: ~D~%" line-length)
+	    (loop for y from y0 by dy
+		  until (>= y height)
+		  do
+		  ;; Don't use this method anyway? I think I have
+		  ;; calculated the size of idat for interlaced
+		  ;; images somewhere
+		  (vector-push-extend filter-type idat)
+		  (incf index)
+		  (loop for x from x0 by dx
+			until (>= x width) 
+			do
+			(loop for value in (multiple-value-list
+					    (if plte-hash-table
+						(read-pixel-interlaced source y x
+								       color-type bit-depth
+								       plte-hash-table)
+					      (read-pixel-interlaced source y x
+								     color-type bit-depth)))
+			      do
+			      (vector-push-extend value idat)
+			      (incf index))))
+;	      (format t "~&Ready to apply filter, index: ~D~%" index)
+	    (loop for i from 0 below (ceiling height dy)
+		  with filter-index = (- index (* line-length (ceiling height dy)))
+		  with previous-line-index = nil
+		  with filtered-line1 = (make-array line-length
+						    :element-type '(unsigned-byte 8))
+		  with filtered-line2 = (make-array line-length
+						    :element-type '(unsigned-byte 8))
+		  do
+;                  (format t "~&i: ~D~%" i)
+;                  (format t "~&filter-index: ~D~%" filter-index)
+;                  (format t "~&Line ~D before filtering: ~A~%"
+;                          i (subseq idat filter-index (+ filter-index line-length)))
+		  (apply-filter idat filtered-line1 filter-type filter-index
+				previous-line-index line-length
+				bytes-per-pixel)
+;		  (format t "~&Line ~D after filtering: ~A~%" i filtered-line1)
+		  (when (> i 0)
+;                    (format t "~&We are here:~%")
+;                    (format t "~&filter-index: ~D~%" filter-index)
+;                    (format t "~&line-length: ~D~%" line-length)
+;                    (print idat)
+		    (replace idat filtered-line2 :start1 (- filter-index line-length)
+			     :end1 filter-index)
+;		      (print idat)
+		    ;; Special case for the last line
+		    (when (= i (1- (ceiling height dy)))
+		      (replace idat filtered-line1 :start1 filter-index
+			       :end1 (+ line-length filter-index))))
+		  (replace filtered-line2 filtered-line1)
+		  (setq previous-line-index filter-index)
+		  (incf filter-index line-length))))
+
+    (debug-format-1 "~&Writing PNG signature.~%")
+    (write-sequence +png-signature+ stream)
+    (debug-format-1 "~&Writing IHDR chunk.~%")
+    (write-ihdr stream ihdr)
+    (when (= color-type 3)
+      (debug-format-1 "~&Writing PLTE chunk.~%")
+      (write-plte stream plte-hash-table))
+    (debug-format-1 "~&Writing IDAT chunk.~%")
+    (encode-idat idat btype #'write-idat stream)
+    (debug-format-1 "~&Writing tEXt chunk.~%")
+    (write-text stream text)
+    (debug-format-1 "~&Writing IEND chunk.~%")
+    (write-iend stream)
+    (debug-format-1 "~&Image written to file ~A.~%" (pathname stream))))
 
 
 (defun encode-file (source output-file &key (filter-type 4) (btype 1)
-			   (bit-depth 8) (color-type 2) (source-bit-depth 8))
+		    (bit-depth 8) (color-type 2) (source-bit-depth 8)
+		    (interlace-method 0))
   (with-open-file (stream output-file
 			  :direction :output
 			  :if-exists :supersede
 			  :element-type '(unsigned-byte 8))
     (encode-stream source stream :filter-type filter-type :btype btype
 		   :bit-depth bit-depth :color-type color-type
-		   :source-bit-depth source-bit-depth)))
+		   :source-bit-depth source-bit-depth
+		   :interlace-method interlace-method)))
 
 
 
@@ -1014,15 +1080,26 @@ data if the CRCs are equal, else return an error"
 
 
 
+(defun read-pixel-interlaced (source x y color-type bit-depth &optional plte-hash-table)
+  "Read a pixel from source array and return it"
+  (ecase color-type
+    (0 (pixel-value source x y bit-depth 0))
+    (2 (values (pixel-value source x y bit-depth 0)
+	       (pixel-value source x y bit-depth 8)
+	       (pixel-value source x y bit-depth 16)))
+    (3 (first (gethash (ldb (byte 24 0) (aref source x y)) plte-hash-table)))
+    (4 (values (pixel-value source x y bit-depth 0)
+	       (pixel-value source x y bit-depth 24)))
+    (6 (values (pixel-value source x y bit-depth 0)
+	       (pixel-value source x y bit-depth 8)
+	       (pixel-value source x y bit-depth 16)
+	       (pixel-value source x y bit-depth 24)))))
+
+
 
 (defun read-pixel (source line i width filter-type color-type
 		   bit-depth &optional plte-hash-table)
-  "Read each pixel from source array and write it to a scanline,
-applying a byte for the filter-type as the first byte in the line"
-;  (declare (type fixnum x y red green blue alpha)
-;           (optimize speed))
-;  (format t "~&width in read-pixel: ~D~%" width)
-  (setf (aref line 0) filter-type)
+  "Read each pixel from source array and write it to a scanline"
   (ecase color-type
     (0 (loop for j from 0 below (floor width (floor 8 bit-depth))
 	     do
@@ -1082,10 +1159,10 @@ applying a byte for the filter-type as the first byte in the line"
 	(unless (gethash key hash-table)
 	  (setf (gethash key hash-table) (list index key))
 	  (incf index))
-	finally (progn
+	finally	(progn
 		  (debug-format-1 "~&Number of entries in PLTE: ~D~%" index)
 		  (when (> index 255)
-		    (error "Sorry. Too many entries in PLTE palette. You cannot use a PLTE chunk for this picture."))
+		    (error "Sorry. Too many entries in PLTE palette. You can't use PLTE for this image."))
 		  (return
 		    hash-table))))
 	
