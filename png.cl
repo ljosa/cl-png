@@ -92,6 +92,15 @@
         (incf length (ash (aref array i) (* 8 (- 1 i))))
         finally (return length)))
 
+(defun string-to-byte-array (s)
+  (declare (type simple-base-string s)
+           (optimize (speed 3) (safety 0)))
+  (let* ((len (length s))
+	 (a (make-array len :element-type '(unsigned-byte 8))))
+    (dotimes (i len)
+      (setf (aref a i) (char-code (char s i))))
+    a))
+
 ;;; CRC-32 functions
 
 (defun update-crc (crc buffer)
@@ -910,7 +919,7 @@ data if the CRCs are equal, else return an error"
         (checksum 0))
     (write-32-bits-value stream length)
     (when tag
-      (write-sequence tag stream)
+      (write-sequence (map 'vector #'char-code tag) stream)
       (setf checksum (update-crc checksum tag)))
     (write-sequence data stream)
     (write-32-bits-value stream (update-crc checksum data))))
@@ -933,7 +942,7 @@ data if the CRCs are equal, else return an error"
     (write-chunk stream ihdr-array)))
 
 (defun write-iend (stream)
-  (write-chunk stream "IEND"))
+  (write-chunk stream #() "IEND"))
 
 (defun write-plte (stream plte-hash-table)
   (let* ((entries (hash-table-count plte-hash-table))
@@ -969,7 +978,9 @@ data if the CRCs are equal, else return an error"
 (defun encode-idat (idat writer-function stream)
   (funcall writer-function
            stream
-           (zlib-from-cl-pdf:compress-string (map 'string #'code-char idat))))
+	   (string-to-byte-array
+              	(zlib-from-cl-pdf:compress-string
+		  (map 'string #'code-char idat)))))
 
 (defun read-pixel-interlaced (source x y color-type bit-depth &optional plte-hash-table)
   "Read a pixel from source array and return it"

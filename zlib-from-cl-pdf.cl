@@ -13,6 +13,8 @@
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
 
+(defvar *compress-streams* t)
+
 ;; CMUCL desperately wants this *here*, not in config.lisp, or it
 ;; won't load the compiled file.  Putting it in an eval-when in
 ;; config.lisp doesn't work either.
@@ -95,7 +97,7 @@
   "Returns two values: array of bytes containing the uncompressed data
  and the number of uncompressed bytes"
   (let* ((sourcelen (length source))
-	 (destsize (or #+ignore uncompressed-size (* 2 sourcelen)))
+	 (destsize (or uncompressed-size (* 2 sourcelen)))
 	 (dest (uffi:allocate-foreign-string destsize :unsigned t))
 	 (destlen (uffi:allocate-foreign-object :long)))
     (setf (uffi:deref-pointer destlen :long) destsize)

@@ -10,7 +10,6 @@
 
 (defpackage #:png
   (:use #:cl)
-  (:import-from #:zlib #:encode-buffer #:decode-buffer)
   (:export #:decode-file
 	   #:encode-file
 	   #:decode-stream
