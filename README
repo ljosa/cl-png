@@ -1,0 +1,85 @@
+PNG is a Common Lisp package for reading and writing PNG (Portable
+Network Graphics) files.
+
+The PNG specification "PNG (Portable Network Graphics) Specification,
+Version 1.2", obtainable at http://www.libpng.org/pub/png/ describes
+the different "chunks" that a PNG file format consists of.  These are
+divided into critical chunks and auxiliary chunks.  All critical PNG
+chunks are supported for reading (so it should be possible to read all
+types of PNG images).  For writing, the following properties of the
+IDAT chunk are not yet implemented:
+
+ * Interlacing.
+ 
+ * Images with sample depth 16 bits.
+
+
+In addition, some of the other properties of the IDAT chunk are not
+tested very much.
+
+Since PNG uses the zlib compressed data format (defined in RFC 1950)
+to compress some of the PNG chunks, I have made an implementation of
+this library in Common Lisp (see the file zlib.cl).  This library can
+decode all three types of compressed data that are defined in the
+deflate compressed data format (which is the low-level compression
+method used by zlib) (see RFC 1951), but can only encode data in two
+of the three possible encoding schemes.  The scheme that offers most
+compression, but also is the slowest and most complicated, is not
+implemented yet.
+
+
+
+Availability
+------------
+
+New versions of this software can be found at:
+http://www.pvv.org/~musum/lisp/
+
+
+
+Installation
+------------
+
+This software requires that DEFSYSTEM (I have used defsystem.lisp from
+CLOCC (http://clocc.sourceforge.net) is loaded.
+
+
+1. Load the system definition file:
+
+   (load "png.system")
+
+2. Compile and load the system:
+
+   (make:operate-on-system "png" :compile)
+
+
+
+Decoding
+------------
+
+(png:decode-file <PNG-file>)
+
+decodes a file and returns an array with the result 
+
+(png:decode-file <PNG-file> :output-file <PPM-file>)
+
+decodes the file and writes the result to a PGM or PNM file so you can
+see the result with an external viewer.
+
+
+Encoding
+------------
+
+ENCODE-FILE takes an image array (as produced by DECODE-FILE, for
+instance) and a file to write the result to as arguments:
+
+(png:encode-file image-array <PNG-file>)
+
+or
+
+(png:encode-file (png:decode-file <PNG-file>) <PNG-file>) 
+
+will write an image to <PNG file> (check the options to ENCODE-FILE to
+see the different combinations of bit depths and color types that are
+possible).
+

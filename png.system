@@ -1,0 +1,26 @@
+;;;; -*- Mode: Lisp; Syntax: Common-Lisp; Package: PNG; -*-
+
+;;; This package contains an implementation of parts of the PNG
+;;; specification, version 1.2.
+;;;
+;;; See file README for more info.
+;;;
+;;; Author: Harald Musum
+;;;
+;;; Copyright (c) 2001 Harald Musum. All rights reserved.
+
+
+(unless (find-package "MAKE")
+  (error "PNG: MK-DEFSYSTEM is required to use the .system file."))
+
+
+(mk:defsystem "PNG"
+    :source-extension "cl"
+    :source-pathname ""
+    :binary-pathname ""
+    :components ((:file "zlib")
+		 (:file "png-pkg"
+			:depends-on ("zlib"))
+		 (:file "png"
+			:depends-on ("png-pkg" "zlib"))))
+
