@@ -4,7 +4,8 @@
 
 (defpackage #:zlib-from-cl-pdf
   (:use #:common-lisp)
-  (:export #:*compress-streams* #:*zlib-search-paths* #:compress-string))
+  (:export #:*compress-streams* #:*zlib-search-paths* #:compress-string
+   #:uncompress-string))
 
 (in-package #:zlib-from-cl-pdf)
 
@@ -79,6 +80,45 @@
 	  (progn
 	    (uffi:free-foreign-object destlen)
 	    (uffi:free-foreign-object dest)))))))
+
+#+zlib
+(uffi:def-function ("uncompress" c-uncompress)
+    ((dest (* :unsigned-char))
+     (destlen (* :long))
+     (source :cstring)
+     (source-len :long))
+    :returning :int
+    :module "zlib")
+
+#+zlib
+(defun uncompress-string (source &key uncompressed-size)
+  "Returns two values: array of bytes containing the uncompressed data
+ and the number of uncompressed bytes"
+  (let* ((sourcelen (length source))
+	 (destsize (or #+ignore uncompressed-size (* 2 sourcelen)))
+	 (dest (uffi:allocate-foreign-string destsize :unsigned t))
+	 (destlen (uffi:allocate-foreign-object :long)))
+    (setf (uffi:deref-pointer destlen :long) destsize)
+    (uffi:with-cstring (source-native source)
+      (unwind-protect
+          (loop
+           (let ((result (c-uncompress dest destlen source-native sourcelen))
+	         (newdestlen (uffi:deref-pointer destlen :long)))
+             (case result
+               (0 (return (values (uffi:convert-from-foreign-string 
+			           dest
+;			  :external-format '(:latin-1 :eol-style :lf)
+			           :length newdestlen
+			           :null-terminated-p nil)
+			          newdestlen)))
+              (-5 (uffi:free-foreign-object dest)
+                  (setf destsize (* 2 destsize)
+                        dest (uffi:allocate-foreign-string destsize :unsigned t)
+                        (uffi:deref-pointer destlen :long) destsize))
+              (t (error "zlib error, code ~D" result)))))
+        (progn
+          (uffi:free-foreign-object destlen)
+          (uffi:free-foreign-object dest))))))
 
 #|
 Unfinished Work!

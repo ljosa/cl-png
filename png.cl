@@ -8,7 +8,7 @@
 ;;;; --------------------------------------------------------------------------
 ;;;;  (c) copyright 2001 by Harald Musum
 ;;;;
-;;;; $Id: png.cl,v 1.5 2004-03-05 17:30:50 ljosa Exp $
+;;;; $Id: png.cl,v 1.6 2004-03-05 18:47:21 ljosa Exp $
 ;;;;
 ;;;; DOCUMENTATION
 ;;;;
@@ -193,9 +193,9 @@ data if the CRCs are equal, else return an error"
 (defun decode-idat (idat size)
   "Decode IDAT chunk and return a vector with the result"
   (debug-format-2 "~&IDAT processing. Length of data: ~D.~%" (length idat))
-  (decode-buffer idat size))
-
-
+  (map '(array (unsigned-byte 8) (*)) #'char-code
+       (zlib-from-cl-pdf:uncompress-string (map 'string #'code-char idat)
+                                           :uncompressed-size size)))
 
 (defun decode-plte (plte)
   "Decode PLTE chunk and return a vector palette"
@@ -699,14 +699,14 @@ data if the CRCs are equal, else return an error"
 
 (defun decode-stream (stream &key output-file)
   (let* ((image (decode-image stream))
-	   (image-data (png-image-idat image))
-	   (line-length (line-length (png-image-ihdr image)))
-	   (previous-line-index nil)
-	   (width (ihdr-width (png-image-ihdr image)))
-	   (height (ihdr-height (png-image-ihdr image)))
-	   (bit-depth (ihdr-bit-depth (png-image-ihdr image)))
-	   (color-type (ihdr-color-type (png-image-ihdr image)))
-	   (target (make-array (list height width))))
+         (image-data (png-image-idat image))
+         (line-length (line-length (png-image-ihdr image)))
+         (previous-line-index nil)
+         (width (ihdr-width (png-image-ihdr image)))
+         (height (ihdr-height (png-image-ihdr image)))
+         (bit-depth (ihdr-bit-depth (png-image-ihdr image)))
+         (color-type (ihdr-color-type (png-image-ihdr image)))
+         (target (make-array (list height width))))
       (declare (type (vector (unsigned-byte 8)) image-data)
 	       (optimize speed))
       (debug-format-1 "~&Decoding stream: ~A.~%" stream)
