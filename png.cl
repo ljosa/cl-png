@@ -8,7 +8,7 @@
 ;;;; --------------------------------------------------------------------------
 ;;;;  (c) copyright 2001 by Harald Musum
 ;;;;
-;;;; $Id: png.cl,v 1.2 2004-03-05 03:57:54 ljosa Exp $
+;;;; $Id: png.cl,v 1.3 2004-03-05 04:03:32 ljosa Exp $
 ;;;;
 ;;;; DOCUMENTATION
 ;;;;
@@ -17,7 +17,7 @@
 
 
 
-(in-package "PNG")
+(in-package #:png)
 
 
 (eval-when (compile)
@@ -48,10 +48,10 @@
 (defconstant +png-major-version+ 0)
 (defconstant +png-minor-version+ 2)
 
-(defconstant +png-signature+ #(137 80 78 71 13 10 26 10))
+(defvar +png-signature+ #(137 80 78 71 13 10 26 10))
 
 
-(defconstant +crc-table+
+(defvar +crc-table+
   (loop with array = (make-array 256 :element-type '(unsigned-byte 32))
 	for i from 0 below 256
 	for c = i
@@ -68,7 +68,7 @@
 
 (deftype bit-depth () '(member 1 2 4 8 16))
 (deftype color-type () '(member 0 2 3 4 6))
-(defconstant +bit-depth-and-color-type-combination+ '((0 1) (0 2) (0 4) (0 8) (0 16)
+(defvar +bit-depth-and-color-type-combination+ '((0 1) (0 2) (0 4) (0 8) (0 16)
 						      (2 8) (2 16)
 						      (3 1) (3 2) (3 4) (3 8)
 						      (4 8) (4 16)
@@ -102,7 +102,9 @@
   "Read a 32-bit word from STREAM, MSB first"
   (loop with length = 0
         for i from 0 below 4 do
-        (incf length (ash (read-byte stream nil nil) (* 8 (- 3 i))))
+        (incf length (ash (or (read-byte stream nil nil)
+			      (error "incomplete word on input stream"))
+			  (* 8 (- 3 i))))
         finally (return length)))
 
 

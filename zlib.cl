@@ -136,13 +136,13 @@
 ;;;; use a bitvector instead of a bit-list when encoding?
 
 
-(defpackage "ZLIB"
-  (:use "COMMON-LISP")
-  (:export "ENCODE-BUFFER"
-           "DECODE-BUFFER"))
+(defpackage #:zlib
+  (:use #:cl)
+  (:export #:encode-buffer
+           #:decode-buffer))
 
 
-(in-package "ZLIB")
+(in-package #:zlib)
 
 
 (eval-when (compile)
@@ -174,7 +174,7 @@
 (defconstant +zlib-minor-version+ 1)
 
 
-(defconstant +fixed-huffman-code-lengths+
+(defvar +fixed-huffman-code-lengths+
   (let ((array (make-array 288)))
     (loop for i from 0 to 143 do (setf (aref array i) 8))
     (loop for i from 144 to 255 do (setf (aref array i) 9))
@@ -183,7 +183,7 @@
     array)
   "The number of bits used to represent a code length")
 
-(defconstant +fixed-huffman-codes+
+(defvar +fixed-huffman-codes+
   (let ((array (make-array 288))
 	(start1 #b00110000)
 	(start2 #b110010000)
@@ -196,7 +196,7 @@
     array))
 
 
-(defconstant +fixed-huffman-code-bitlist+
+(defvar +fixed-huffman-code-bitlist+
   (loop with array = (make-array (length +fixed-huffman-codes+))
 	for i from 0 below (length +fixed-huffman-codes+)
 	do
@@ -213,7 +213,7 @@
 (defconstant +huffman-end-of-block-symbol+ 256)
 
 
-(defconstant +dynamic-huffman-code-lengths-order+
+(defvar +dynamic-huffman-code-lengths-order+
   '(16 17 18 0 8 7 9 6 10 5 11 4 12 3 13 2 14 1 15))
 
 (defconstant +max-non-compressed-block-size+ 65535)
@@ -234,7 +234,7 @@
 
 
 
-(defconstant +length-encoding+
+(defvar +length-encoding+
   #((0 3) (0 4) (0 5) (0 6) (0 7) (0 8)
     (0 9) (0 10) (1 11) (1 13) (1 15) (1 17)
     (2 19) (2 23) (2 27) (2 31) (3 35) (3 43)
@@ -243,7 +243,7 @@
   "Gives the relationship between a code, and extra bits and length")
 
 
-(defconstant +distance-encoding+
+(defvar +distance-encoding+
   #((0 1) (0 2) (0 3) (0 4) (1 5) (1 7)
     (2 9) (2 13) (3 17) (3 25) (4 33) (4 49)  
     (5 65) (5 97) (6 129) (6 193) (7 257) (7 385)

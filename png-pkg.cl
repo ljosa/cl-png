@@ -8,13 +8,13 @@
 ;;; Copyright (c) 2001 Harald Musum. All rights reserved.
 
 
-(defpackage "PNG"
-  (:use "COMMON-LISP")
-  (:import-from "ZLIB" "ENCODE-BUFFER" "DECODE-BUFFER")
-  (:export "DECODE-FILE"
-	   "ENCODE-FILE"
-	   "DECODE-STREAM"
-	   "ENCODE-STREAM"
-	   "IMAGE-SIZE"))
+(defpackage #:png
+  (:use #:cl)
+  (:import-from #:zlib #:encode-buffer #:decode-buffer)
+  (:export #:decode-file
+	   #:encode-file
+	   #:decode-stream
+	   #:encode-stream
+	   #:image-size))
 
 
