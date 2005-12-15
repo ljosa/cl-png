@@ -5,7 +5,12 @@ OPEN BUGS
 2: Converts images with depth lower than 8 into 8-bit images.
    (This takes place in COMPONENT-VALUE).
 
-BUGS FIXED IN VERSON 0.4
+BUGS FIXED IN VERSION 0.5
+-------------------------
+
+7: Did not find libz on Mac OS X.
+
+BUGS FIXED IN VERSION 0.4
 ------------------------
 
 4: :IMPORT-FROM clause in png-pkg.cl doesn't work without zlib.cl.

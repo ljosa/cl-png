@@ -1,3 +1,5 @@
+Version 0.5 (2005-12-15)
+ - Fix simple bug (#7) that prevented loading of zlib on Mac OS X.
 Version 0.4 (2004-03-06)
  - Fix simple bug (#4) in package definition that made CL-PNG unloadable.
  - Fix simple bug (#5) that made memory allocation in UNCOMPRESS-STRING

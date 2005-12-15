@@ -23,16 +23,11 @@
   "The paths where to search the zlib shared library")
 
 (defparameter *zlib-path*
-  #-(or macosx darwin)
   (uffi:find-foreign-library
    "libz"
    *zlib-search-paths*
    :drive-letters '("C" "D" "E")
-   :types '("so" "a" "dll"))
-  #+(or macosx darwin)
-  (uffi:find-foreign-library
-   "z"
-   `(,(pathname-directory *load-pathname*))))
+   :types '("so" "a" "dll" "dylib")))
 
 (cond
   (*zlib-path*
