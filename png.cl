@@ -45,10 +45,10 @@
 (deftype color-type () '(member 0 2 3 4 6))
 
 (defvar +bit-depth-and-color-type-combination+ '((0 1) (0 2) (0 4) (0 8) (0 16)
-						      (2 8) (2 16)
-						      (3 1) (3 2) (3 4) (3 8)
-						      (4 8) (4 16)
-						      (6 8) (6 16)))
+						 (2 8) (2 16)
+						 (3 1) (3 2) (3 4) (3 8)
+						 (4 8) (4 16)
+						 (6 8) (6 16)))
 
 (defstruct png-image
   ihdr
@@ -476,17 +476,18 @@ data if the CRCs are equal, else return an error"
 	       (write-pixel target x y value value value 255))))
 	  (2
 	   (let ((red (component-value image-data
-				       (+ index (* 3 i (ash bit-depth -3)))
+				       (+ index (* 3 i (ash bit-depth -3))
+					  (* 2 (ash bit-depth -3)))
 				       0
 				       bit-depth))
 		 (green (component-value image-data
 					 (+ index (* 3 i (ash bit-depth -3))
-					    (ash bit-depth -3))
+					    (* 1 (ash bit-depth -3)))
 					 0
 					 bit-depth))
 		 (blue (component-value image-data
 					(+ index (* 3 i (ash bit-depth -3))
-					   (* 2 (ash bit-depth -3)))
+					   (* 0 (ash bit-depth -3)))
 					0
 					bit-depth)))
 	     (if (= bit-depth 16)
@@ -575,7 +576,7 @@ data if the CRCs are equal, else return an error"
 		 (debug-format-1 "~&Processing PLTE chunk.~%")
 		 (setq plte (decode-plte data)))
 		 ;;(print plte))
-		((string= chunk-type "IDAT")
+√		((string= chunk-type "IDAT")
 		 (debug-format-1 "~&Processing IDAT chunk.~%")
 		 (setq idat (concatenate '(vector (unsigned-byte 8) *) idat data)))
 		((string= chunk-type "tEXt")
