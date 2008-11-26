@@ -39,7 +39,7 @@
   (let ((stream-var (gensym "STREAM")))
     ; Keep the stream from being GCed before we close it.
     `(let ((,stream-var ,stream)) 
-       (let ((,var (fdopen (stream-fd ,stream) ,mode)))
+       (let ((,var (fdopen (stream-fd ,stream-var) ,mode)))
 	 (unwind-protect (progn ,@body)
 	   (fclose ,var))))))
 
