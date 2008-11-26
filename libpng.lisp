@@ -1,7 +1,7 @@
 ;;; Bugs:
-;;;  * Can't handle 16-bit images properly.
-;;;  * Should do 1, 2, and 4-bit images properly.
-;;;  * Needs documentation.
+;;;  * Should signal more specific errors.
+;;;  * Should warn.
+;;;  * Needs unit tests.
 
 (in-package #:png)
 
@@ -25,7 +25,7 @@ of elements."
   `(image ,height ,width 1))
 
 (deftype rgb-image (&optional height width)
-  "An IMAGE with one channel."
+  "An IMAGE with three channels."
   `(image ,height ,width 3))
 
 (defun make-image (height width channels &key (initial-element 0))
@@ -34,9 +34,17 @@ of elements."
 					:element-type '(unsigned-byte 8)
 					:initial-element initial-element)))
 
-(defun image-height (image) (array-dimension image 0))
-(defun image-width (image) (array-dimension image 1))
-(defun image-channels (image) (array-dimension image 2))
+(defun image-height (image) 
+  "Return the height of image, i.e., the number of rows."
+  (array-dimension image 0))
+
+(defun image-width (image)
+  "Return the width of IMAGE, i.e., the number of columns."
+  (array-dimension image 1))
+
+(defun image-channels (image) 
+  "Return the number of channels in IMAGE."
+  (array-dimension image 2))
 
 
 (define-foreign-library libpng
@@ -157,7 +165,6 @@ of elements."
   (error message))
 
 (defmacro with-png-struct ((var &key (direction :input)) &body body)
-  "DIRECTION can be :INPUT or :OUTPUT."
   (let ((pointer (gensym "POINTER")))
     `(let ((,var (,(ecase direction
 			  (:input 'png-create-read-struct)
@@ -213,7 +220,7 @@ of elements."
 (defun grayp (color-type)
   (zerop (logand color-type (lognot +png-color-mask-alpha+))))
 
-(defun decode-stream (stream)
+(defun decode (stream)
   "Read a PNG image from STREAM and return it as an array of type IMAGE."
   (with-png-struct (png-ptr :direction :input)
     (with-png-info-struct (info-ptr png-ptr (png-create-info-struct png-ptr))
@@ -239,11 +246,11 @@ of elements."
 	      image)))))))
 
 (defun decode-file (pathname)
-  "Open the specified file and call DECODE-STREAM on it."
+  "Open the specified file and call DECODE on it."
   (with-open-file (input pathname)
-    (decode-stream input)))
+    (decode input)))
 
-(defun encode-stream (image output)
+(defun encode (image output)
   "Write an image to a stream in PNG format."
   (check-type image (or grayscale-image rgb-image))
   (with-png-struct (png-ptr :direction :output)
@@ -264,10 +271,10 @@ of elements."
 
 
 (defun encode-file (image pathname)
-  "Open the specified file and use ENCODE-STREAM to write the
-specified image to it."
+  "Open the specified file and use ENCODE to write the specified image
+to it."
   (with-open-file (output pathname :direction :output)
-    (encode-stream image output)))
+    (encode image output)))
 
 ;;;; Testing.
 
@@ -291,15 +298,15 @@ specified image to it."
 
 (defun test-decode (&optional (input "/Users/ljosa/research/systbio/rp_ld_example.png") (output "/tmp/foo.pnm"))
   (defparameter *image* (with-open-file (stream input)
-			  (decode-stream stream)))
+			  (decode stream)))
   (write-image-as-pnm *image* output))
 
 (defun test-encode (&optional (input-filename "/Users/ljosa/research/systbio/rp_ld_example.png") (output-filename "/tmp/foo.png"))
   (with-open-file (output output-filename :direction :output 
 			  :if-exists :supersede)
-    (encode-stream (with-open-file (input input-filename)
-		     (decode-stream input))
-		   output)))
+    (encode (with-open-file (input input-filename)
+	      (decode input))
+	    output)))
 
 (defun test-read-pngsuite ()
   (dolist (pathname (directory "/Users/ljosa/tmp/PngSuite/*.png"))
@@ -315,7 +322,7 @@ specified image to it."
 	       (terpri)))
 	(handler-case 
 	    (with-open-file (stream pathname)
-	      (let ((im (decode-stream stream)))
+	      (let ((im (decode stream)))
 		(unless (= (image-channels im)
 			   (ecase (digit-char-p (char (pathname-name pathname)
 						      4))
@@ -330,7 +337,7 @@ specified image to it."
 (defun rotate (input-pathname output-pathname)
   "Read a PNG image, rotate it 90 degrees, and write it to a new file."
   (let* ((old (with-open-file (input input-pathname)
-		(png:decode-stream input)))
+		(png:decode input)))
 	 (new (png:make-image (png:image-width old)
 			      (png:image-height old)
 			      (png:image-channels old)))
@@ -341,4 +348,4 @@ specified image to it."
 	    (setf (aref new i j k) (aref old j (- m i 1) k)))))
       (with-open-file (output output-pathname :direction :output
 			      :if-exists :supersede)
-	(png:encode-stream new output))))
+	(png:encode new output))))
