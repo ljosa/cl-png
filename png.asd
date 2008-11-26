@@ -1,16 +1,15 @@
-;;;; -*- Mode: Lisp; Package: ASDF; -*-
+;;;; -*- Mode: Lisp; -*-
 
-(in-package :asdf)
+(cl:eval-when (:load-toplevel :execute)
+  (asdf:operate 'asdf:load-op '#:cffi-grovel))
 
-(defsystem :png
+(asdf:defsystem :png
   :perform (load-op :after (op png)
 		    (pushnew :png cl:*features*))
-  :components ((:file "zlib-from-cl-pdf")
-	       (:file "png-pkg"
-		      :depends-on ("zlib-from-cl-pdf"))
-	       (:file "png"
-		      :depends-on ("png-pkg" "zlib-from-cl-pdf")))
-  :depends-on (#:uffi))
+  :components ((:file "package")
+	       (:file "compat" :depends-on ("package"))
+	       (:file "libpng" :depends-on ("libpngint" "compat"))
+	       (cffi-grovel:grovel-file "libpngint" :depends-on ("package"))
+	       )
+  :depends-on (#:cffi))
 
-(defmethod source-file-type ((c cl-source-file) (s (eql (find-system :png))))
-  "cl")
