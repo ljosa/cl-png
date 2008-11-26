@@ -71,7 +71,13 @@ to handle corner cases.
 <p>CL-PNG 0.5 has been tested on the following platforms:
 <ul>
   <li>SBCL 1.0.20 on Mac OS X
-  <li>Clozure CL on Mac OS X (32-bit)
+  <li>SBCL 1.0.18 on Linux
+  <li>Clozure CL (32-bit) on Mac OS X
+</ul>
+<p>The following platforms do not work:
+<ul>
+  <li>Allegro CL (Symbol "MAKE-SHAREABLE-BYTE-VECTOR" not found in the
+  CFFI-SYS package.)
 </ul>
 <p>Please <a href="http://www.ljosa.com/~ljosa/contact">report</a> success/failure on other platforms.
 
@@ -90,28 +96,28 @@ href="http://www.ljosa.com/~ljosa/software/cl-png/download/">http://www.ljosa.co
 
 <h2><a name="Installation">Installation</a></h2>
 
-<p>CL-PNG depends
-on <a href="http://www.libpng.org/pub/png/libpng.html">libpng</a>
-(your distribution may have a separate package,
-called <tt>libpng-dev</tt> or something similar, that contains the
-required <tt>png.h</tt> header file)
-and <a href="http://common-lisp.net/project/cffi/">CFFI</a>.
+<p>CL-PNG depends on <a
+href="http://www.libpng.org/pub/png/libpng.html">libpng</a> (your
+distribution may have a separate package, called <tt>libpng-dev</tt>
+or something similar, that contains the required <tt>png.h</tt> header
+file) and <a href="http://common-lisp.net/project/cffi/">CFFI</a>.
+CFFI in turn depends on <a
+href="http://common-lisp.net/project/alexandria/">Alexandria</a>, <a
+href="http://common-lisp.net/project/babel/">Babel</a>, and <a
+href="http://www.cliki.net/trivial-features">trivial-features</a>.
 
 <p>If you have <a
 href="http://common-lisp.net/project/asdf-install/">ASDF-INSTALL</a>,
-installation is easy:
+installation is easy: the following takes care of CL-PNG and all dependencies:
 <pre>
     (asdf-install:install '#:png)
 </pre>
 
-<p>Otherwise, symlink the file <tt>png.asd</tt> to one of the
-directories in
-<a href="http://constantly.at/lisp/asdf/Using-asdf-to-load-systems.html#Using%20asdf%20to%20load%20systems"><tt>ASDF:*CENTRAL-REGISTRY*</tt></a>.
-Then, execute
-<pre>
-    (asdf:oos 'asdf:load-op '#:png)
-</pre>
-<p>in order to compile and load CL-PNG.</p>
+<p>Otherwise, install the dependencies, then symlink the file
+<tt>png.asd</tt> to one of the directories in <a
+href="http://constantly.at/lisp/asdf/Using-asdf-to-load-systems.html#Using%20asdf%20to%20load%20systems"><tt>ASDF:*CENTRAL-REGISTRY*</tt></a>.
+Then, execute <pre> (asdf:oos 'asdf:load-op '#:png) </pre> <p>in order
+to compile and load CL-PNG.</p>
 
 <h2><a name="Example">Example</a></h2>
 

@@ -23,6 +23,10 @@
   ;; sockets appear to be direct instances of STREAM
   (ignore-errors (socket:stream-handles stream)))
 
+#+lispworks
+(defmethod stream-fd ((stream stream))
+  (stream::os-file-handle-stream-file-handle stream))
+
 (defcfun "fdopen" :pointer
   (fd :int)
   (mode :string))
