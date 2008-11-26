@@ -36,7 +36,7 @@
   (file :pointer))
 
 (defmacro with-file ((var stream &optional (mode "rb")) &body body)
-  (let ((stream (gensym "STREAM")))
+  (let ((stream-var (gensym "STREAM")))
     ; Keep the stream from being GCed before we close it.
     `(let ((,stream-var ,stream)) 
        (let ((,var (fdopen (stream-fd ,stream) ,mode)))
