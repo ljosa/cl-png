@@ -1,10 +1,8 @@
 CL-PNG is a Common Lisp package for reading and writing PNG (Portable
-Network Graphics) files.  CL-PNG was originally written by Harald
-Musum, and is now maintained by Vebjorn Ljosa <vebjorn@ljosa.com>.
-New versions can be found at
+Network Graphics) files.  The CL-PNG homepage is at
 <URL:http://www.ljosa.com/~ljosa/software/cl-png/>.
 
-Copyright (C) 2001--2004 by the authors (see the file AUTHORS).
+Copyright (C) 2001--2008 by the authors (see the file AUTHORS).
 Licensed under the GNU Lesser General Public License; see the file
 COPYING for details.
 
