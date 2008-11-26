@@ -38,3 +38,23 @@
   `(let ((,var (fdopen (stream-fd ,stream) ,mode)))
      (unwind-protect (progn ,@body)
        (fclose ,var))))
+
+
+#|
+;;; From http://www.mail-archive.com/cffi-devel@common-lisp.net/msg00867.html
+
+(in-package #:cffi-sys)
+
+#+allegro
+(defun make-shareable-byte-vector (size)
+  (make-array size
+              :element-type '(unsigned-byte 8)
+              :allocation :static-reclaimable))
+
+#+allegro
+(defmacro with-pointer-to-vector-data ((ptr-var vector) &body body)
+  `(let ((,ptr-var ,vector))
+     ,@body))
+
+(export '(make-shareable-byte-vector with-pointer-to-vector-data))
+|#

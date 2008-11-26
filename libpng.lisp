@@ -28,11 +28,11 @@ of elements."
   "An IMAGE with three channels."
   `(image ,height ,width 3))
 
-(defun make-image (height width channels &key (initial-element 0))
+(defun make-image (height width channels)
+  "Make a new image of the specified size, with undefined contents."
   (make-array (list height width channels) :element-type '(unsigned-byte 8)
-	      :displaced-to (make-array (* height width channels)
-					:element-type '(unsigned-byte 8)
-					:initial-element initial-element)))
+	      :displaced-to (cffi-sys:make-shareable-byte-vector
+			     (* height width channels))))
 
 (defun image-height (image) 
   "Return the height of image, i.e., the number of rows."
