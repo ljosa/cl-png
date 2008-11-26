@@ -21,7 +21,8 @@
 #+clisp
 (defmethod stream-fd ((stream stream))
   ;; sockets appear to be direct instances of STREAM
-  (ignore-errors (socket:stream-handles stream)))
+  (ignore-errors (multiple-value-bind (in out) (socket:stream-handles stream)
+		   (or in out))))
 
 #+lispworks
 (defmethod stream-fd ((stream stream))

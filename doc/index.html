@@ -68,16 +68,17 @@ to handle corner cases.
   Please <a href="http://www.ljosa.com/~ljosa/contact">report</a> on
   your experience with the current interface.
 
-<p>CL-PNG 0.5 has been tested on the following platforms:
+<p>CL-PNG 0.5 has been verified to work on the following platforms.
 <ul>
-  <li>SBCL 1.0.20 on Mac OS X
-  <li>SBCL 1.0.18 on Linux
+  <li>SBCL on Linux and Mac OS X
   <li>Clozure CL (32-bit) on Mac OS X
+  <li>LispWorks 5.1 on Mac OS X
 </ul>
-<p>The following platforms do not work:
+<p>The following platform does not work, due to difficulties with the
+implementation of CFFI's shareable byte vector interface.  Patches are
+welcome.
 <ul>
-  <li>Allegro CL (Symbol "MAKE-SHAREABLE-BYTE-VECTOR" not found in the
-  CFFI-SYS package.)
+  <li>Allegro CL
 </ul>
 <p>Please <a href="http://www.ljosa.com/~ljosa/contact">report</a> success/failure on other platforms.
 
