@@ -1,6 +1,4 @@
 ;;; Bugs:
-;;;  * Should signal more specific errors.
-;;;  * Should warn.
 ;;;  * Needs unit tests.
 
 (in-package #:png)
@@ -164,13 +162,17 @@ of elements."
   (declare (ignore png-structp))
   (error message))
 
+(defcallback warn-fn :void ((png-structp :pointer) (message :string))
+  (declare (ignore png-structp))
+  (error message))
+
 (defmacro with-png-struct ((var &key (direction :input)) &body body)
   (let ((pointer (gensym "POINTER")))
     `(let ((,var (,(ecase direction
 			  (:input 'png-create-read-struct)
 			  (:output 'png-create-write-struct))
 			  +png-libpng-ver-string+ (null-pointer)
-			  (callback error-fn) (null-pointer))))
+			  (callback error-fn) (callback warn-fn))))
        (with-foreign-pointer (,pointer (foreign-type-size :pointer))
 	 (setf (mem-ref ,pointer :int) (pointer-address ,var))
 	 (unwind-protect (progn ,@body)
