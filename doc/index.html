@@ -74,11 +74,13 @@ to handle corner cases.
   <li>Clozure CL (32-bit) on Mac OS X
   <li>LispWorks 5.1 on Mac OS X
 </ul>
-<p>The following platform does not work, due to difficulties with the
-implementation of CFFI's shareable byte vector interface.  Patches are
+<p>The following platforms do not work.  Patches are
 welcome.
 <ul>
-  <li>Allegro CL
+  <li>Allegro (due to difficulties with the implementation of CFFI's
+  shareable byte vector interface)
+  <li>CLISP (due to difficulties in opening the underlying file
+  descriptor of a stream with fdopen)
 </ul>
 <p>Please <a href="http://www.ljosa.com/~ljosa/contact">report</a> success/failure on other platforms.
 
@@ -88,10 +90,11 @@ welcome.
 <ul>
   <li>Version 0.5: <A
 href="http://www.ljosa.com/~ljosa/software/cl-png/download/cl-png-0.5.tar.gz">http://www.ljosa.com/~ljosa/software/cl-png/download/cl-png-0.5.tar.gz</A>
+  <li><a href="http://svn.ljosa.com/cl-png/tags/REL_0_5">Individual source code files</a> (in case you
+  would like to take a look at the code before downloading)
   <li>Older versions: <A
 href="http://www.ljosa.com/~ljosa/software/cl-png/download/">http://www.ljosa.com/~ljosa/software/cl-png/download/</A>
-  <li><a href="code/">Individual source code files</a> (in case you
-  would like to take a look at the code before downloading)
+  <li>SVN repository: <a href="http://svn.ljosa.com/cl-png/">http://svn.ljosa.com/cl-png/</a>
 </ul>
 
 
@@ -125,18 +128,18 @@ to compile and load CL-PNG.</p>
 <div style="background-color: #000000;"><pre><span style="color: #ffffff;">(<span style="color: #00ffff;">defun</span> <span style="color: #87cefa;">rotate</span> (input-pathname output-pathname)
   <span style="color: #ffa07a;">"Read a PNG image, rotate it 90 degrees, and write it to a new file."</span>
   (<span style="color: #ffffff;">let*</span> ((old (<span style="color: #00ffff;">with-open-file</span> (input input-pathname)
-		(png:decode-stream input)))
-	 (new (png:make-image (png:image-width old)
-			      (png:image-height old)
-			      (png:image-channels old)))
-	 (m (png:image-width old)))
-      (<span style="color: #00ffff;">dotimes</span> (i (png:image-height new))
-	(<span style="color: #00ffff;">dotimes</span> (j (png:image-width new))
-	  (<span style="color: #00ffff;">dotimes</span> (k (png:image-channels new))
+		(<a href="#decode" style="color: #ffffff">png:decode</a> input)))
+	 (new (png:make-image (<a href="#image-width" style="color: #ffffff">png:image-width</a> old)
+			      (<a href="#image-height" style="color: #ffffff">png:image-height</a> old)
+			      (<a href="#image-channels" style="color: #ffffff">png:image-channels</a> old)))
+	 (m (<a href="#image-width" style="color: #ffffff">png:image-width</a> old)))
+      (<span style="color: #00ffff;">dotimes</span> (i (<a href="#image-height" style="color: #ffffff">png:image-height</a> new))
+	(<span style="color: #00ffff;">dotimes</span> (j (<a href="#image-width" style="color: #ffffff">png:image-width</a> new))
+	  (<span style="color: #00ffff;">dotimes</span> (k (<a href="#image-channels" style="color: #ffffff">png:image-channels</a> new))
 	    (setf (aref new i j k) (aref old j (- m i 1) k)))))
       (<span style="color: #00ffff;">with-open-file</span> (output output-pathname <span style="color: #b0c4de;">:direction</span> <span style="color: #b0c4de;">:output</span>
 			      <span style="color: #b0c4de;">:if-exists</span> <span style="color: #b0c4de;">:supersede</span>)
-	(png:encode-stream new output))))
+	(<a href="#encode" style="color: #ffffff">png:encode</a> new output))))
 </span>
 </pre></div>
 
@@ -232,7 +235,7 @@ array dimensions</a>
 
 <hr>
 
-<p><i>Function</i> <b>MAKE-IMAGE</b>
+<p><a name="make-image"><i>Function</i> <b>MAKE-IMAGE</b></a>
 
 <p><b>Syntax:</b>
 
@@ -255,7 +258,7 @@ array dimensions</a>
 
 <hr>
 
-<p><i>Function</i> <b>IMAGE-HEIGHT</b>
+<p><a name="image-height"><i>Function</i> <b>IMAGE-HEIGHT</b></a>
 
 <p><b>Syntax:</b>
 
@@ -272,7 +275,7 @@ array dimension</a>
 <p>Returns the height of <i>image</i>, i.e., the number of rows.</p>
 
 <hr>
-<p><i>Function</i> <b>IMAGE-WIDTH</b>
+<p><a name="image-width"><i>Function</i> <b>IMAGE-WIDTH</b></a>
 
 <p><b>Syntax:</b>
 
@@ -290,7 +293,7 @@ array dimension</a>
 
 <hr>
 
-<p><i>Function</i> <b>IMAGE-CHANNELS</b>
+<p><a name="image-channels"><i>Function</i> <b>IMAGE-CHANNELS</b></a>
 
 <p><b>Syntax:</b>
 <p><b>image-channels</b> <i>image</i> => <i>channels</i>
@@ -309,10 +312,10 @@ images have three.</p>
 
 <hr>
 
-<p><i>Function</i> <b>ENCODE-STREAM</b>
+<p><a name="encode"><i>Function</i> <b>ENCODE</b></a>
 
 <p><b>Syntax:</b>
-<p><b>encode-stream</b> <i>image</i> <i>output</i> => <a
+<p><b>encode</b> <i>image</i> <i>output</i> => <a
 href="http://www.lispworks.com/documentation/HyperSpec/Body/a_t.htm"><b><i>t</i></b></a>
 
 <p><b>Arguments and Values:</b>
@@ -321,25 +324,35 @@ href="http://www.lispworks.com/documentation/HyperSpec/Body/a_t.htm"><b><i>t</i>
 href="http://www.lispworks.com/documentation/HyperSpec/Body/26_glo_o.htm#output">output</a>
 <a href="http://www.lispworks.com/documentation/HyperSpec/Body/26_glo_s.htm#stream">stream</a></p>
 
-<p><b>Description:</b>
-<p>Writes the <i>image</i> in PNG format to <i>output</i>.
+<p><b>Description:</b> <p>Writes <i>image</i> in PNG format to
+<i>output</i>.  The current version always writes an 8-bit image, but
+future versions may write 1, 2, and 4-bit images when the least
+significant bits may be trimmed without loss of data.
 
-<p><b>Exceptional Situations:</b>
-<p>Signals
-an <a href="http://www.lispworks.com/documentation/HyperSpec/Body/e_error.htm#error"><b>error</b></a>
-if writing the image fails.</p>
+<p><b>Exceptional Situations:</b> <p>Signals an <a
+href="http://www.lispworks.com/documentation/HyperSpec/Body/e_error.htm#error"><b>error</b></a>
+if writing the image fails.  Also signals <a
+href="http://www.lispworks.com/documentation/HyperSpec/Body/e_warnin.htm">warnings</a>.
+</p>
 
 <hr>
 
-<p><i>Function</i> <b>DECODE-STREAM</b>
+<p><a name="decode"><i>Function</i> <b>DECODE</b></a>
 
 <p><b>Syntax:</b>
-<p><b>decode-stream</b> <i>input</i> => <a href="#image"><b><i>image</i></b></a>
+<p><b>decode</b> <i>input</i> => <a href="#image"><b><i>image</i></b></a>
 
 <p><b>Arguments and Values:</b>
 <p><i>input</i>---an fd <a
 href="http://www.lispworks.com/documentation/HyperSpec/Body/26_glo_i.htm#input">input</a>
 <a href="http://www.lispworks.com/documentation/HyperSpec/Body/26_glo_s.htm#stream">stream</a></p>
+
+<p><b>Description:</b> <p>Read an image in PNG format from
+<i>input</i> and returns an array of type <a
+href="#image"><b><i>image</i></b></a>.  Bit depths other than 8 (i.e.,
+1, 2, 4, and 16) will be converted to 8 bits when read.  For 16-bit
+images this implies loss of data, as the least significant bits are
+stripped.
 
 <p><b>Exceptional Situations:</b>
 <p>Signals
