@@ -17,4 +17,5 @@
 (constant (+png-filter-type-base+ "PNG_FILTER_TYPE_BASE"))
 (constant (+png-filter-type-default+ "PNG_FILTER_TYPE_DEFAULT"))
 (constant (+png-transform-identity+ "PNG_TRANSFORM_IDENTITY"))
+(constant (+png-transform-packing+ "PNG_TRANSFORM_PACKING"))
 (constant (+png-interlace-none+ "PNG_INTERLACE_NONE"))

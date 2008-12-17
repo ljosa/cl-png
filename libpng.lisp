@@ -1,5 +1,8 @@
 ;;; Bugs:
 ;;;  * Needs unit tests.
+;;;  * Endianness may be wrong?  See png_set_swap.
+;;;  * Does not handle bit depths 3, 5-7; see png_set_shift.
+;;;  * Reconsider bit depth philosophy of image type.
 
 (in-package #:png)
 
@@ -139,6 +142,9 @@ of elements."
 (defcfun "png_set_strip_alpha" :void
   (png-ptr :pointer))
 
+(defcfun "png_set_packing" :void
+  (png-ptr :pointer))
+
 (defcfun "png_get_rows" :pointer
   (png-ptr :pointer)
   (info-ptr :pointer))
@@ -234,8 +240,7 @@ of elements."
 	      (get-ihdr png-ptr info-ptr)
 	    (when (= color-type +png-color-type-palette+)
 	      (png-set-palette-to-rgb png-ptr))
-	    (when (grayp color-type)
-	      (png-set-expand-gray-1-2-4-to-8 png-ptr))
+	    (png-set-packing png-ptr)
 	    (when (= bit-depth 16)
 	      (png-set-strip-16 png-ptr))
 	    (unless (zerop (logand color-type +png-color-mask-alpha+))
@@ -252,7 +257,7 @@ of elements."
   (with-open-file (input pathname)
     (decode input)))
 
-(defun encode (image output)
+(defun encode (image output &optional (bit-depth 8))
   "Write an image to a stream in PNG format."
   (check-type image (or grayscale-image rgb-image))
   (with-png-struct (png-ptr :direction :output)
@@ -260,23 +265,23 @@ of elements."
       (with-file (file output "wb")
  	(png-init-io png-ptr file)
  	(png-set-ihdr png-ptr info-ptr (image-width image) (image-height image)
- 		      8 (if (= (image-channels image) 1)
- 			    +png-color-type-gray+
- 			    +png-color-type-rgb+)
+ 		      bit-depth (if (= (image-channels image) 1)
+				    +png-color-type-gray+
+				    +png-color-type-rgb+)
  		      +png-interlace-none+ +png-compression-type-default+
  		      +png-filter-type-default+)
  	(with-row-pointers (row-pointers image)
  	  (png-set-rows png-ptr info-ptr row-pointers)
- 	  (png-write-png png-ptr info-ptr +png-transform-identity+ 
+ 	  (png-write-png png-ptr info-ptr +png-transform-packing+ 
  			 (null-pointer))))))
    t)
 
 
-(defun encode-file (image pathname)
+(defun encode-file (image pathname &optional (bit-depth 8))
   "Open the specified file and use ENCODE to write the specified image
 to it."
-  (with-open-file (output pathname :direction :output)
-    (encode image output)))
+  (with-open-file (output pathname :direction :output :if-exists :supersede)
+    (encode image output bit-depth)))
 
 ;;;; Testing.
 
@@ -351,3 +356,39 @@ to it."
       (with-open-file (output output-pathname :direction :output
 			      :if-exists :supersede)
 	(png:encode new output))))
+
+(defun grayscale (image)
+  (let* ((h (image-height image))
+	 (w (image-width image))
+	 (c (image-channels image))
+	 (gray (make-image h w 1)))
+    (dotimes (j w gray)
+      (dotimes (i h)
+	(setf (aref gray i j 0) (floor (loop for k below c
+					  sum (aref image i j k)) c))))))
+
+;; 4.7 s per 8-bit image encoded; this is the same as time-encode.c.
+;; The logior increases this to 5.8 s.
+(defun time-encode ()
+  (let ((im (decode-file "/Users/ljosa/src/cl-png/trunk/Fall.png")))
+      (time
+       (dotimes (i 10)
+	 (princ i)
+	 (terpri)
+	 (with-open-file (output "/tmp/foo.png" :direction :output
+				 :if-exists :overwrite)
+	   (encode im output (bit-depth im)))))))
+
+(defun nstrip (im bits)
+  (dotimes (i (array-total-size im))
+    (setf (row-major-aref im i) 
+	  (ldb (byte (- 8 bits) bits) (row-major-aref im i)))))
+
+(defun bit-depth (im)
+  (let ((x (reduce #'logior (array-displacement im)))
+	(bits 8))
+    (loop 
+       while (and (not (zerop bits))
+		  (zerop (ldb (byte 1 (1- bits)) x)))
+       do (decf bits))
+    bits))
