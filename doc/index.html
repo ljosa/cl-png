@@ -153,12 +153,13 @@ href="http://www.lispworks.com/documentation/HyperSpec/Body/t_array.htm"><b>arra
 
 <p><b>Description:</b>
 <p>An image is a three-dimensional array of <tt>(unsigned-byte 8)</tt>
-displaced to a one-dimensional simple-array with the same total number
-of elements.  The three dimensions represent row, column, and
-<a href="http://en.wikipedia.org/wiki/Channel_(digital_image)">channel</a>.
-In other words, <tt>(aref image i j k)</tt>
-is the intensity in the <tt>k</tt>-th channel of the pixel in
-the <tt>i</tt>-th row and <tt>j</tt>-th column of <tt>image</tt>.</p>
+or <tt>(unsigned-byte 16)</tt> displaced to a one-dimensional
+simple-array with the same total number of elements.  The three
+dimensions represent row, column, and <a
+href="http://en.wikipedia.org/wiki/Channel_(digital_image)">channel</a>.
+In other words, <tt>(aref image i j k)</tt> is the intensity in the
+<tt>k</tt>-th channel of the pixel in the <tt>i</tt>-th row and
+<tt>j</tt>-th column of <tt>image</tt>.</p>
 
 <p><b>Compound Type Specifier Kind:</b>
 <p>Specializing.
@@ -185,7 +186,7 @@ array dimensions</a>
 <a href="http://www.lispworks.com/documentation/HyperSpec/Body/t_t.htm"><b>t</b></a>
 
 <p><b>Description:</b>
-<p>An <a href="#image">image with one <a href="http://en.wikipedia.org/wiki/Channel_(digital_image)">channel</a>.</p>
+<p>An <a href="#image">image</a> with one <a href="http://en.wikipedia.org/wiki/Channel_(digital_image)">channel</a>.</p>
 
 <p><b>Compound Type Specifier Kind:</b>
 <p>Specializing.

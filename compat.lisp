@@ -1,48 +1,28 @@
 (in-package #:com.ljosa.compat)
 
-;; STREAM-FD from CL+SSL
+#+sbcl ; Present in SBCL 1.0.24.
+(declaim (ftype (function (array) (values (simple-array * (*)) &optional))
+                array-storage-vector))
+(defun array-storage-vector (array)
+  "Returns the underlying storage vector of ARRAY, which must be a non-displaced array.
 
-(defgeneric stream-fd (stream))
+In SBCL, if ARRAY is a of type \(SIMPLE-ARRAY * \(*)), it is its own storage
+vector. Multidimensional arrays, arrays with fill pointers, and adjustable
+arrays have an underlying storage vector with the same ARRAY-ELEMENT-TYPE as
+ARRAY, which this function returns.
 
-(defmethod stream-fd (stream) stream)
-
-#+sbcl
-(defmethod stream-fd ((stream sb-sys:fd-stream))
-  (sb-sys:fd-stream-fd stream))
-
-#+cmu
-(defmethod stream-fd ((stream system:fd-stream))
-  (system:fd-stream-fd stream))
-
-#+openmcl
-(defmethod stream-fd ((stream ccl::basic-stream))
-  (ccl::ioblock-device (ccl::stream-ioblock stream t)))
-
-#+clisp
-(defmethod stream-fd ((stream stream))
-  ;; sockets appear to be direct instances of STREAM
-  (ignore-errors (multiple-value-bind (in out) (socket:stream-handles stream)
-		   (or in out))))
-
-#+lispworks
-(defmethod stream-fd ((stream stream))
-  (stream::os-file-handle-stream-file-handle stream))
-
-(defcfun "fdopen" :pointer
-  (fd :int)
-  (mode :string))
-
-(defcfun "fclose" :void
-  (file :pointer))
-
-(defmacro with-file ((var stream &optional (mode "rb")) &body body)
-  (let ((stream-var (gensym "STREAM")))
-    ; Keep the stream from being GCed before we close it.
-    `(let ((,stream-var ,stream)) 
-       (let ((,var (fdopen (stream-fd ,stream-var) ,mode)))
-	 (unwind-protect (progn ,@body)
-	   (fclose ,var))))))
-
+Important note: the underlying vector is an implementation detail. Even though
+this function exposes it, changes in the implementation may cause this
+function to be removed without further warning."
+  ;; KLUDGE: Without TRULY-THE the system is not smart enough to figure out that
+  ;; the return value is always of the known type.
+  (sb-ext:truly-the (simple-array * (*))
+             (if (sb-kernel:array-header-p array)
+                 (if (sb-kernel:%array-displaced-p array)
+                     (error "~S cannot be used with displaced arrays. Use ~S instead."
+                            'array-storage-vector 'array-displacement)
+                     (sb-kernel:%array-data-vector array))
+                 array)))
 
 #|
 ;;; From http://www.mail-archive.com/cffi-devel@common-lisp.net/msg00867.html

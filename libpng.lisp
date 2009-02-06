@@ -1,59 +1,25 @@
 ;;; Bugs:
-;;;  * Needs unit tests.
+;;;  * Byte order issues on bigendian machines.  Write test.
+;;;  * 16->8: Divide by 257 and round instead of stipping lsb.
+;;;  * Do the right thing for 1, 2, and 4 bits.
+;;;  * Handle strange bit depths.
 
 (in-package #:png)
 
-(defun image-displaced-to-buffer-p (image)
-  (multiple-value-bind (displacement index) (array-displacement image)
-    (and displacement
-	 (zerop index)
-	 (typep (array-displacement image) 
-		(list 'simple-array '(unsigned-byte 8)
-		      (list (reduce #'* (array-dimensions image))))))))
-  
-(deftype image (&optional height width channels)
-  "An image is a three-dimensional array of (unsigned-byte 8)
-displaced to a one-dimensional simple-array with the same total number
-of elements."
-  `(and (array (unsigned-byte 8) (,height ,width ,channels))
-	(satisfies image-displaced-to-buffer-p)))
-
-(deftype grayscale-image (&optional height width)
-  "An IMAGE with one channel."
-  `(image ,height ,width 1))
-
-(deftype rgb-image (&optional height width)
-  "An IMAGE with three channels."
-  `(image ,height ,width 3))
-
-(defun make-image (height width channels)
-  "Make a new image of the specified size, with undefined contents."
-  (make-array (list height width channels) :element-type '(unsigned-byte 8)
-	      :displaced-to (cffi-sys:make-shareable-byte-vector
-			     (* height width channels))))
-
-(defun image-height (image) 
-  "Return the height of image, i.e., the number of rows."
-  (array-dimension image 0))
-
-(defun image-width (image)
-  "Return the width of IMAGE, i.e., the number of columns."
-  (array-dimension image 1))
-
-(defun image-channels (image) 
-  "Return the number of channels in IMAGE."
-  (array-dimension image 2))
-
 
 (define-foreign-library libpng
-  (:unix (:or "libpng12.0.dylib" "libpng12.so.0"))
-  (t (:default "libpng")))
+;;  (:unix (:or "libpng12.0.dylib" "libpng12.dylib" "libpng12.so.0"))
+  (t (:default "libpng12")))
 
 (use-foreign-library libpng)
 
-(defcfun "png_access_version_number" :uint32)
-
 (defconstant +png-libpng-ver-string+ (symbol-name '|1.2.26|))
+
+;;;
+;;; Foreign function definitions.
+;;;
+
+(defcfun "png_access_version_number" :uint32)
 
 (defcfun "png_create_read_struct" :pointer
   (user-png-ver :string)
@@ -86,6 +52,20 @@ of elements."
 (defcfun "png_init_io" :void
   (png-ptr :pointer)
   (file :pointer))
+
+(defcfun "png_set_read_fn" :void
+  (png-ptr :pointer)
+  (io-ptr :pointer)
+  (read-data-fn :pointer))
+
+(defcfun "png_set_write_fn" :void
+  (png-ptr :pointer)
+  (io-ptr :pointer)
+  (write-data-fn :pointer)
+  (output-flush-fn :pointer))
+
+(defcfun "png_get_io_ptr" :pointer
+  (png-ptr :pointer))
 
 (defcfun "png_read_info" :void
   (png-ptr :pointer)
@@ -139,6 +119,9 @@ of elements."
 (defcfun "png_set_strip_alpha" :void
   (png-ptr :pointer))
 
+(defcfun "png_set_swap" :void
+  (png-ptr :pointer))
+
 (defcfun "png_get_rows" :pointer
   (png-ptr :pointer)
   (info-ptr :pointer))
@@ -158,6 +141,47 @@ of elements."
   (transforms :int)
   (params :pointer))
 
+;;;
+;;; Input/output.
+;;;
+
+(defvar *stream*)
+
+(defvar *buffer* (make-shareable-byte-vector 16))
+
+(defun ensure-buffer-sufficient (needed)
+  (when (< (length *buffer*) needed)
+    (let ((new-length (length *buffer*)))
+      (loop while (< new-length needed)
+	 do (setf new-length (* 2 new-length)))
+      (setf *buffer* (make-shareable-byte-vector new-length)))))
+
+(defcallback user-read-data :void ((png-ptr :pointer) (data :pointer)
+				   (length png-size))
+  (declare (ignore png-ptr))
+  (ensure-buffer-sufficient length)
+  (let ((bytes-read (read-sequence *buffer* *stream* :start 0 :end length)))
+    (unless (= bytes-read length)
+      (error "Expected to read ~D bytes, but only read ~D." length 
+	     bytes-read)))
+  (with-pointer-to-vector-data (buffer-ptr *buffer*)
+    (memcpy data buffer-ptr length)))
+
+(defcallback user-write-data :void ((png-ptr :pointer) (data :pointer)
+				    (length png-size))
+  (declare (ignore png-ptr))
+  (ensure-buffer-sufficient length)
+  (with-pointer-to-vector-data (buffer-ptr *buffer*)
+    (memcpy buffer-ptr data length))
+  (write-sequence *buffer* *stream* :start 0 :end length))
+
+(defcallback user-flush-data :void ((png-ptr :pointer))
+  (declare (ignore png-ptr)))
+
+;;;
+;;; Error handling.
+;;;
+
 (defcallback error-fn :void ((png-structp :pointer) (message :string))
   (declare (ignore png-structp))
   (error message))
@@ -165,6 +189,10 @@ of elements."
 (defcallback warn-fn :void ((png-structp :pointer) (message :string))
   (declare (ignore png-structp))
   (error message))
+
+;;;
+;;;
+;;;
 
 (defmacro with-png-struct ((var &key (direction :input)) &body body)
   (let ((pointer (gensym "POINTER")))
@@ -201,6 +229,11 @@ of elements."
 	  (values (mem-ref width :uint32) (mem-ref height :uint32)
 		  (mem-ref bit-depth :int) (mem-ref color-type :int)))))))
 
+(defun bytes-per-pixel (image)
+  (ecase (image-bit-depth image)
+    (16 2)
+    (8 1)))
+
 (defmacro with-row-pointers ((rows-ptr image)
 			     &body body)
   (let ((row-pointers (gensym "ROW-POINTERS"))
@@ -216,19 +249,29 @@ of elements."
 	   (dotimes (,i (image-height ,image))
 	     (setf (mem-aref ,rows-ptr :pointer ,i) 
 		   (inc-pointer ,raw-data (* ,i (image-width ,image)
-					     (image-channels ,image)))))
+					     (image-channels ,image)
+					     (bytes-per-pixel ,image)))))
 	   ,@body)))))
 
 (defun grayp (color-type)
   (zerop (logand color-type (lognot +png-color-mask-alpha+))))
 
-(defun decode (stream)
-  "Read a PNG image from STREAM and return it as an array of type IMAGE."
+(defun decode (input)
+  "Read a PNG image from INPUT and return it as an array of type IMAGE.
+
+Return an 8-BIT-IMAGE if the bit depth of the PNG file is 8 bits or
+less, and otherwise return a 16-BIT-IMAGE.  The samples will be
+left-shifted as much as necessary to utilize the dynamic range of the
+full 8 or 16 bits; as an example, a PNG file with a depth of 2 bits,
+which therefore only uses the values 0, 1, 2, and 3 will result in an
+8-BIT-IMAGE with the values 0, 85, 170, and 255."
   (with-png-struct (png-ptr :direction :input)
     (with-png-info-struct (info-ptr png-ptr (png-create-info-struct png-ptr))
       (with-png-info-struct (end-ptr png-ptr (png-create-info-struct png-ptr))
-	(with-file (file stream "rb")
-	  (png-init-io png-ptr file)
+	;;(with-file (file input "rb")
+	(let ((*stream* input))
+	  ;;(png-init-io png-ptr file)
+	  (png-set-read-fn png-ptr (null-pointer) (callback user-read-data))
 	  (png-read-info png-ptr info-ptr)
 	  (multiple-value-bind (width height bit-depth color-type)
 	      (get-ihdr png-ptr info-ptr)
@@ -237,11 +280,12 @@ of elements."
 	    (when (grayp color-type)
 	      (png-set-expand-gray-1-2-4-to-8 png-ptr))
 	    (when (= bit-depth 16)
-	      (png-set-strip-16 png-ptr))
+	      (png-set-swap png-ptr))
 	    (unless (zerop (logand color-type +png-color-mask-alpha+))
 	      (png-set-strip-alpha png-ptr))
 	    (let ((image (make-image height width
-				     (if (grayp color-type) 1 3))))
+				     (if (grayp color-type) 1 3)
+				     (if (= 16 bit-depth) 16 8))))
 	      (with-row-pointers (row-pointers image)
 		(png-set-rows png-ptr info-ptr row-pointers)
 		(png-read-image png-ptr row-pointers))
@@ -249,7 +293,7 @@ of elements."
 
 (defun decode-file (pathname)
   "Open the specified file and call DECODE on it."
-  (with-open-file (input pathname)
+  (with-open-file (input pathname :element-type '(unsigned-byte 8))
     (decode input)))
 
 (defun encode (image output)
@@ -257,84 +301,34 @@ of elements."
   (check-type image (or grayscale-image rgb-image))
   (with-png-struct (png-ptr :direction :output)
     (with-png-info-struct (info-ptr png-ptr (png-create-info-struct png-ptr))
-      (with-file (file output "wb")
- 	(png-init-io png-ptr file)
+      (let ((*stream* output))
+	;;(with-file (file output "wb")
+ 	;;(png-init-io png-ptr file)
+	(png-set-write-fn png-ptr (null-pointer) (callback user-write-data)
+			  (callback user-flush-data))
  	(png-set-ihdr png-ptr info-ptr (image-width image) (image-height image)
- 		      8 (if (= (image-channels image) 1)
- 			    +png-color-type-gray+
- 			    +png-color-type-rgb+)
+ 		      (image-bit-depth image) 
+		      (if (= (image-channels image) 1)
+			  +png-color-type-gray+
+			  +png-color-type-rgb+)
  		      +png-interlace-none+ +png-compression-type-default+
  		      +png-filter-type-default+)
  	(with-row-pointers (row-pointers image)
  	  (png-set-rows png-ptr info-ptr row-pointers)
- 	  (png-write-png png-ptr info-ptr +png-transform-identity+ 
+ 	  (png-write-png png-ptr info-ptr +png-transform-swap-endian+ 
  			 (null-pointer))))))
    t)
-
 
 (defun encode-file (image pathname)
   "Open the specified file and use ENCODE to write the specified image
 to it."
-  (with-open-file (output pathname :direction :output)
+  (with-open-file (output pathname :element-type '(unsigned-byte 8)
+			  :direction :output :if-exists :supersede)
     (encode image output)))
 
-;;;; Testing.
-
-(defun write-image-as-pnm (image filename)
-  (with-open-file (output filename :direction :output :if-exists :supersede
-			  :element-type '(unsigned-byte 8))
-    (write-sequence (map 'vector #'char-code 
-			 (format nil "~A~%~D ~D~%~D~%" 
-				 (if (= 1 (array-dimension image 2)) "P5" "P6")
-				 (array-dimension image 1)
-				 (array-dimension image 0)
-				 (1- (expt 2 8))))
-		    output)
-    (let ((buffer (make-array (reduce #'* (array-dimensions image))
-			      :element-type '(unsigned-byte 8)
-			      :displaced-to image)))
-      (write-sequence buffer output)))
-  t)
-
-(defvar *image*)
-
-(defun test-decode (&optional (input "/Users/ljosa/research/systbio/rp_ld_example.png") (output "/tmp/foo.pnm"))
-  (defparameter *image* (with-open-file (stream input)
-			  (decode stream)))
-  (write-image-as-pnm *image* output))
-
-(defun test-encode (&optional (input-filename "/Users/ljosa/research/systbio/rp_ld_example.png") (output-filename "/tmp/foo.png"))
-  (with-open-file (output output-filename :direction :output 
-			  :if-exists :supersede)
-    (encode (with-open-file (input input-filename)
-	      (decode input))
-	    output)))
-
-(defun test-read-pngsuite ()
-  (dolist (pathname (directory "/Users/ljosa/tmp/PngSuite/*.png"))
-    (unless (equal (pathname-name pathname) "pngsuite_logo")
-      (format t "~A " (pathname-name pathname))
-      (flet ((report (error)
-	       (princ (if (eq (and error t)
-			      (equal #\x (char (pathname-name pathname) 0)))
-			  "OK  "
-			  "FAIL - "))
-	       (when error
-		 (princ error))
-	       (terpri)))
-	(handler-case 
-	    (with-open-file (stream pathname)
-	      (let ((im (decode stream)))
-		(unless (= (image-channels im)
-			   (ecase (digit-char-p (char (pathname-name pathname)
-						      4))
-			     ((0 1 4) 1)
-			     ((2 3 6) 3)))
-		  (error "Unexpected number of channels: ~D" 
-			 (image-channels im))))
-	      (report nil))
-	  (error (e)
-	    (report e)))))))
+;;;
+;;; Example.
+;;;
 
 (defun rotate (input-pathname output-pathname)
   "Read a PNG image, rotate it 90 degrees, and write it to a new file."
