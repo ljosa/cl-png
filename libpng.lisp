@@ -1,8 +1,12 @@
 ;;; Bugs:
-;;;  * Byte order issues on bigendian machines.  Write test.
-;;;  * 16->8: Divide by 257 and round instead of stipping lsb.
-;;;  * Do the right thing for 1, 2, and 4 bits.
-;;;  * Handle strange bit depths.
+;;;  * set_expand from 2 and 4 bits doesn't work on CCL DarwinPPC.
+;;;  * GCC 3.3 on DarwinPPC does not understand -m32.
+;;;  * 16-bit doesn't work on CLISP.
+;;;  * Handle strange bit depths such as 12.
+;;;     - since we cannot represent it, we cannot write it.
+;;;        - except if we look for unused LSBs.
+;;;     - since we cannot write it, we should convert on read.
+;;;  * Allow 2-D array without displacement.
 
 (in-package #:png)
 
@@ -103,6 +107,9 @@
   (png-ptr :pointer))
 
 (defcfun "png_set_expand_gray_1_2_4_to_8" :void
+  (png-ptr :pointer))
+
+(defcfun "png_set_expand" :void
   (png-ptr :pointer))
 
 (defcfun "png_get_valid" :uint32
@@ -285,7 +292,10 @@ which therefore only uses the values 0, 1, 2, and 3 will result in an
 	    (when (= color-type +png-color-type-palette+)
 	      (png-set-palette-to-rgb png-ptr))
 	    (when (grayp color-type)
-	      (png-set-expand-gray-1-2-4-to-8 png-ptr))
+	      ;; png-set-expand-gray-1-2-4-to-8 did nothing on CCL
+	      ;; DarwinPPC, but png-set-expand seems to work.
+	      (png-set-expand png-ptr))
+	    #+little-endian
 	    (when (= bit-depth 16)
 	      (png-set-swap png-ptr))
 	    (unless (zerop (logand color-type +png-color-mask-alpha+))
@@ -320,7 +330,9 @@ which therefore only uses the values 0, 1, 2, and 3 will result in an
 		      +png-filter-type-default+)
 	(with-row-pointers (row-pointers image)
 	  (png-set-rows png-ptr info-ptr row-pointers)
-	  (png-write-png png-ptr info-ptr +png-transform-swap-endian+ 
+	  (png-write-png png-ptr info-ptr 
+			 #+little-endian +png-transform-swap-endian+ 
+			 #-little-endian +png-transform-identity+
 			 (null-pointer))))))
   t)
 
