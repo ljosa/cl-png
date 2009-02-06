@@ -3,6 +3,7 @@
 #+sbcl ; Present in SBCL 1.0.24.
 (declaim (ftype (function (array) (values (simple-array * (*)) &optional))
                 array-storage-vector))
+#+sbcl
 (defun array-storage-vector (array)
   "Returns the underlying storage vector of ARRAY, which must be a non-displaced array.
 

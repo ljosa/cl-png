@@ -206,21 +206,25 @@
 			  (:output 'png-create-write-struct))
 			  +png-libpng-ver-string+ (null-pointer)
 			  (callback error-fn) (callback warn-fn))))
-       (with-foreign-pointer (,pointer (foreign-type-size :pointer))
-	 (setf (mem-ref ,pointer :int) (pointer-address ,var))
-	 (unwind-protect (progn ,@body)
+       (when (null-pointer-p ,var)
+	 (error "Failed to allocate PNG write struct."))
+       (unwind-protect (progn ,@body)
+	 (with-foreign-pointer (,pointer (foreign-type-size :pointer))
+	   (setf (mem-ref ,pointer :pointer) ,var)
 	   ,(ecase direction
-	      (:input `(png-destroy-read-struct ,pointer (null-pointer) 
-						(null-pointer)))
-	      (:output `(png-destroy-write-struct ,pointer 
-						  (null-pointer)))))))))
+		   (:input `(png-destroy-read-struct ,pointer (null-pointer) 
+						     (null-pointer)))
+		   (:output `(png-destroy-write-struct ,pointer 
+						       (null-pointer)))))))))
 
 (defmacro with-png-info-struct ((var png-struct initform) &body body)
   (let ((pointer (gensym "POINTER")))
     `(let ((,var ,initform))
-       (with-foreign-pointer (,pointer (foreign-type-size :pointer))
-	 (setf (mem-ref ,pointer :int) (pointer-address ,var))
-	 (unwind-protect (progn ,@body)
+       (when (null-pointer-p ,var)
+	 (error "Failed to allocate PNG info struct."))
+       (unwind-protect (progn ,@body)
+	 (with-foreign-pointer (,pointer (foreign-type-size :pointer))
+	   (setf (mem-ref ,pointer :pointer) ,var)
 	   (png-destroy-info-struct ,png-struct ,pointer))))))
 
 (defun get-ihdr (png-ptr info-ptr)
@@ -273,9 +277,7 @@ which therefore only uses the values 0, 1, 2, and 3 will result in an
   (with-png-struct (png-ptr :direction :input)
     (with-png-info-struct (info-ptr png-ptr (png-create-info-struct png-ptr))
       (with-png-info-struct (end-ptr png-ptr (png-create-info-struct png-ptr))
-	;;(with-file (file input "rb")
 	(let ((*stream* input))
-	  ;;(png-init-io png-ptr file)
 	  (png-set-read-fn png-ptr (null-pointer) (callback user-read-data))
 	  (png-read-info png-ptr info-ptr)
 	  (multiple-value-bind (width height bit-depth color-type)
@@ -307,22 +309,20 @@ which therefore only uses the values 0, 1, 2, and 3 will result in an
   (with-png-struct (png-ptr :direction :output)
     (with-png-info-struct (info-ptr png-ptr (png-create-info-struct png-ptr))
       (let ((*stream* output))
-	;;(with-file (file output "wb")
- 	;;(png-init-io png-ptr file)
 	(png-set-write-fn png-ptr (null-pointer) (callback user-write-data)
 			  (callback user-flush-data))
- 	(png-set-ihdr png-ptr info-ptr (image-width image) (image-height image)
- 		      (image-bit-depth image) 
+	(png-set-ihdr png-ptr info-ptr (image-width image) (image-height image)
+		      (image-bit-depth image) 
 		      (if (= (image-channels image) 1)
 			  +png-color-type-gray+
 			  +png-color-type-rgb+)
- 		      +png-interlace-none+ +png-compression-type-default+
- 		      +png-filter-type-default+)
- 	(with-row-pointers (row-pointers image)
- 	  (png-set-rows png-ptr info-ptr row-pointers)
- 	  (png-write-png png-ptr info-ptr +png-transform-swap-endian+ 
- 			 (null-pointer))))))
-   t)
+		      +png-interlace-none+ +png-compression-type-default+
+		      +png-filter-type-default+)
+	(with-row-pointers (row-pointers image)
+	  (png-set-rows png-ptr info-ptr row-pointers)
+	  (png-write-png png-ptr info-ptr +png-transform-swap-endian+ 
+			 (null-pointer))))))
+  t)
 
 (defun encode-file (image pathname)
   "Open the specified file and use ENCODE to write the specified image
