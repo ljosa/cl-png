@@ -141,6 +141,11 @@
   (transforms :int)
   (params :pointer))
 
+(defcfun "memcpy" :pointer
+  (dest :pointer)
+  (source :pointer)
+  (n size))
+
 ;;;
 ;;; Input/output.
 ;;;
