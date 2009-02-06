@@ -9,29 +9,31 @@
 (defun image-displaced-to-buffer-p (image)
   (multiple-value-bind (displacement index) (array-displacement image)
     (and displacement
-	 (zerop index)
-	 (typep (array-displacement image) 
-		(list 'simple-array (array-element-type image)
-		      (list (reduce #'* (array-dimensions image))))))))
+        (zerop index)
+        (typep (array-displacement image) 
+               (list #+allegro 'array
+                     #-allegro 'simple-array
+                     (array-element-type image)
+                     (list (reduce #'* (array-dimensions image))))))))
   
 (deftype 8-bit-image (&optional height width channels)
   "An 8-bit-image is a three-dimensional array of (unsigned-byte 8)
-displaced to a one-dimensional simple-array with the same total number
-of elements."
+displaced to a one-dimensional array with the same total number of
+elements."
   `(and (array (unsigned-byte 8) (,height ,width ,channels))
-	(satisfies image-displaced-to-buffer-p)))
+        (satisfies image-displaced-to-buffer-p)))
 
 (deftype 16-bit-image (&optional height width channels)
   "A 16-bit-image is a three-dimensional array of (unsigned-byte 16)
-displaced to a one-dimensional simple-array with the same total number
-of elements."
+displaced to a one-dimensional array with the same total number of
+elements."
   `(and (array (unsigned-byte 16) (,height ,width ,channels))
 	(satisfies image-displaced-to-buffer-p)))
 
 (deftype image (&optional height width channels)
   "An image is a three-dimensional array of (unsigned-byte 8)
-or (unsigned-byte 16) displaced to a one-dimensional simple-array with
-the same total number of elements."
+or (unsigned-byte 16) displaced to a one-dimensional array with the
+same number of elements."
   `(or (8-bit-image ,height ,width ,channels)
        (16-bit-image ,height ,width ,channels)))
 
@@ -48,7 +50,12 @@ the same total number of elements."
   (sys:in-static-area
    (make-array size :element-type (list 'unsigned-byte byte-size))))
 
-#-lispworks
+#+allegro
+(defun make-shareable-byte-vector (size &optional (byte-size 8))
+  (make-array size :element-type (list 'unsigned-byte byte-size)
+	      :allocation :static-reclaimable))
+
+#-(or lispworks allegro)
 (defun make-shareable-byte-vector (size &optional (byte-size 8))
    (make-array size :element-type (list 'unsigned-byte byte-size)))
 

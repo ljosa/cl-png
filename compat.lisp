@@ -1,4 +1,4 @@
-(in-package #:com.ljosa.compat)
+(in-package #:png)
 
 #+sbcl ; Present in SBCL 1.0.24.
 (declaim (ftype (function (array) (values (simple-array * (*)) &optional))
@@ -25,21 +25,17 @@ function to be removed without further warning."
                      (sb-kernel:%array-data-vector array))
                  array)))
 
-#|
-;;; From http://www.mail-archive.com/cffi-devel@common-lisp.net/msg00867.html
-
-(in-package #:cffi-sys)
-
-#+allegro
-(defun make-shareable-byte-vector (size)
-  (make-array size
-              :element-type '(unsigned-byte 8)
-              :allocation :static-reclaimable))
-
 #+allegro
 (defmacro with-pointer-to-vector-data ((ptr-var vector) &body body)
-  `(let ((,ptr-var ,vector))
-     ,@body))
-
-(export '(make-shareable-byte-vector with-pointer-to-vector-data))
-|#
+  "Bind PTR-VAR to a foreign pointer to the data in VECTOR. Not safe
+except with vectors allocated by MAKE-SHAREABLE-BYTE-VECTOR and
+possibly arrays of type simple-array (unsigned-byte 8) (*)."
+;;; An array allocated in static-reclamable is a non-simple array in
+;;; the normal Lisp allocation area, pointing to a simple array in the
+;;; static-reclaimable allocation area. Therefore we have to get out
+;;; the simple-array to find the pointer to the actual contents.
+  (let ((simple-vec (gensym "SIMPLE-VEC")))
+    `(excl:with-underlying-simple-vector (,vector ,simple-vec)
+       (let ((,ptr-var (ff:fslot-address-typed :unsigned-char 
+					       :lisp ,simple-vec)))
+	 ,@body))))
