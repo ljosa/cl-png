@@ -39,3 +39,61 @@ possibly arrays of type simple-array (unsigned-byte 8) (*)."
        (let ((,ptr-var (ff:fslot-address-typed :unsigned-char 
 					       :lisp ,simple-vec)))
 	 ,@body))))
+
+#+clisp
+(defmacro with-pointer-to-vector-data ((ptr-var vector) &body body)
+  "Bind PTR-VAR to a foreign pointer to the data in VECTOR."
+  (let ((vector-var (gensym))
+	(type (gensym))
+	(nbytes (gensym))
+	(bytes-per-word (gensym)))
+    `(let* ((,vector-var ,vector)
+	    ,type ,bytes-per-word)
+       (etypecase ,vector-var
+	 ((simple-array (unsigned-byte 8) (*)) (setq ,type :unsigned-char
+						     ,bytes-per-word 1))
+	 ((simple-array (unsigned-byte 16) (*)) (setq ,type :unsigned-short
+						      ,bytes-per-word 2)))
+       (with-foreign-pointer (,ptr-var (* (length ,vector-var) ,bytes-per-word)
+				       ,nbytes)
+         ;; copy-in
+         (loop
+	    for word from 0 
+	    and byte below ,nbytes by ,bytes-per-word 
+	    do (cffi-sys:%mem-set (aref ,vector-var word) ,ptr-var ,type byte))
+         (unwind-protect (progn ,@body)
+           ;; copy-out
+           (loop 
+	      for word from 0
+	      and byte below ,nbytes by ,bytes-per-word
+	      do (setf (aref ,vector-var word)
+		       (cffi-sys:%mem-ref ,ptr-var ,type byte))))))))
+
+#+clisp
+(defmacro with-pointer-to-vector-data ((ptr-var vector) &body body)
+  "Bind PTR-VAR to a foreign pointer to the data in VECTOR."
+  (let ((vector-var (gensym))
+	(type (gensym))
+	(nbytes (gensym))
+	(bytes-per-word (gensym)))
+    `(let* ((,vector-var ,vector)
+	    ,type ,bytes-per-word)
+       (etypecase ,vector-var
+	 ((simple-array (unsigned-byte 8) (*)) (setq ,type :unsigned-char
+						     ,bytes-per-word 1))
+	 ((simple-array (unsigned-byte 16) (*)) (setq ,type :unsigned-short
+						      ,bytes-per-word 2)))
+       (with-foreign-pointer (,ptr-var (* (length ,vector-var) ,bytes-per-word)
+				       ,nbytes)
+         ;; copy-in
+         (loop
+	    for word from 0 
+	    and byte below ,nbytes by ,bytes-per-word 
+	    do (cffi-sys:%mem-set (aref ,vector-var word) ,ptr-var ,type byte))
+         (unwind-protect (progn ,@body)
+           ;; copy-out
+           (loop 
+	      for word from 0
+	      and byte below ,nbytes by ,bytes-per-word
+	      do (setf (aref ,vector-var word)
+		       (cffi-sys:%mem-ref ,ptr-var ,type byte))))))))

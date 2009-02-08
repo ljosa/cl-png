@@ -1,6 +1,6 @@
 ;;; Bugs:
 ;;;  * cffi-grovel: GCC 3.3 on DarwinPPC does not understand -m32.
-;;;  * 16-bit doesn't work on CLISP.
+;;;  * How to find the PngSuite files?
 ;;;  * Handle strange bit depths such as 12.
 ;;;     - since we cannot represent it, we cannot write it.
 ;;;        - except if we look for unused LSBs.
