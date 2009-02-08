@@ -1,5 +1,13 @@
-Version 0.5 (2005-12-15)
- - Fix simple bug (#7) that prevented loading of zlib on Mac OS X.
+Version 0.6
+ - Can now read and write from Lisp streams in general, not just those
+   that have file descriptors.
+ - Added unit tests.
+ - Fixed pointer size bug causing memory fault on SBCL Linux x86_64.
+ - Read, write, and represent 16-bit images.  (Previously downscaled
+   to 8 bits on read.)
+ - Fixed reading of 1, 2, and 4-bit images on CCL DarwinPPC.
+Version 0.5 (2008-12-01)
+ - Complete rewrite, using foreign calls to libpng.
 Version 0.4 (2004-03-06)
  - Fix simple bug (#4) in package definition that made CL-PNG unloadable.
  - Fix simple bug (#5) that made memory allocation in UNCOMPRESS-STRING

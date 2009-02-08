@@ -1,5 +1,19 @@
 (in-package #:png)
 
+#+lispworks
+(defun make-shareable-byte-vector (size &optional (byte-size 8))
+  (sys:in-static-area
+   (make-array size :element-type (list 'unsigned-byte byte-size))))
+
+#+allegro
+(defun make-shareable-byte-vector (size &optional (byte-size 8))
+  (make-array size :element-type (list 'unsigned-byte byte-size)
+	      :allocation :static-reclaimable))
+
+#-(or lispworks allegro)
+(defun make-shareable-byte-vector (size &optional (byte-size 8))
+   (make-array size :element-type (list 'unsigned-byte byte-size)))
+
 #+sbcl ; Present in SBCL 1.0.24.
 (declaim (ftype (function (array) (values (simple-array * (*)) &optional))
                 array-storage-vector))

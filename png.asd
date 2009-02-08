@@ -11,14 +11,15 @@
 #+(and cffi-features:darwin ccl)
 (push #p"/opt/local/lib/" cffi:*foreign-library-directories*)
 
-(asdf:defsystem :png
+(asdf:defsystem #:png
+  :description "Read and write PNG (Portable Network Graphics) files."
   :perform (asdf:load-op :after (op png)
 			 (pushnew :png *features*))
   :components ((:file "package")
 	       (:file "compat" :depends-on ("package"))
 	       (:file "image" :depends-on ("package"))
-	       (:file "libpng" :depends-on ("libpngint" "image" "compat"))
-	       (cffi-grovel:grovel-file "libpngint" :depends-on ("package"))
+	       (:file "libpng" :depends-on ("grovel" "image" "compat"))
+	       (cffi-grovel:grovel-file "grovel" :depends-on ("package"))
 	       )
   :depends-on (#:cffi))
 

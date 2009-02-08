@@ -1,11 +1,12 @@
 (defpackage #:png-test
   (:use #:common-lisp #:lisp-unit #:png)
-  (:export #:run-tests))
+  (:export #:*pngsuite-pathname*))
 
 (in-package #:png-test)
 
-(defparameter *pngsuite-pathname* (merge-pathnames "PngSuite/"
-						   *load-truename*))
+(defparameter *pngsuite-pathname*
+  #+asdf (asdf:system-relative-pathname '#:png "PngSuite/"))
+
 
 (defun decode-pngsuite (basename)
   (let ((pathname (merge-pathnames (make-pathname :name basename :type "png")
@@ -61,12 +62,12 @@
     (assert-equal #x3e00 (aref im 31 0 0))))
 
 (defun print-image (image)
-  (let ((digits (etypecase image
-		  (8-bit-image 2)
-		  (16-bit-image 4))))
+  (let ((f (etypecase image
+	     (8-bit-image "~2x ")
+	     (16-bit-image "~4x "))))
     (dotimes (i (image-height image))
       (dotimes (j (image-width image))
-	(format t "~2x " (aref image i j 0)))
+	(format t f (aref image i j 0)))
       (terpri))))
 
 (defun values-used (image)

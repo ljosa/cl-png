@@ -10,6 +10,7 @@ debian/postinst
 debian/prerm
 debian/rules
 doc/index.html
+image.lisp
 libpng.lisp
 libpngint.lisp
 MANIFEST
@@ -17,3 +18,8 @@ NEWS
 package.lisp
 png.asd
 README
+PngSuite/basn0g08.png
+PngSuite/basn0g16.png
+PngSuite/basn0g04.png
+PngSuite/basn0g02.png
+PngSuite/basn0g01.png

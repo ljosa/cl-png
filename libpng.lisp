@@ -1,11 +1,7 @@
 ;;; Bugs:
 ;;;  * cffi-grovel: GCC 3.3 on DarwinPPC does not understand -m32.
-;;;  * How to find the PngSuite files?
-;;;  * Handle strange bit depths such as 12.
-;;;     - since we cannot represent it, we cannot write it.
-;;;        - except if we look for unused LSBs.
-;;;     - since we cannot write it, we should convert on read.
-;;;  * Allow 2-D array without displacement.
+;;;  * Benchmarking and profiling.
+;;;  * Test on ECL.
 
 (in-package #:png)
 
@@ -18,9 +14,7 @@
 
 (defconstant +png-libpng-ver-string+ (symbol-name '|1.2.26|))
 
-;;;
 ;;; Foreign function definitions.
-;;;
 
 (defcfun "png_access_version_number" :uint32)
 
@@ -152,13 +146,12 @@
   (source :pointer)
   (n size))
 
-;;;
+
 ;;; Input/output.
-;;;
 
 (defvar *stream*)
 
-(defvar *buffer* (make-shareable-byte-vector 16))
+(defvar *buffer*)
 
 (defun ensure-buffer-sufficient (needed)
   (when (< (length *buffer*) needed)
@@ -189,9 +182,8 @@
 (defcallback user-flush-data :void ((png-ptr :pointer))
   (declare (ignore png-ptr)))
 
-;;;
+
 ;;; Error handling.
-;;;
 
 (defcallback error-fn :void ((png-structp :pointer) (message :string))
   (declare (ignore png-structp))
@@ -201,9 +193,8 @@
   (declare (ignore png-structp))
   (error message))
 
-;;;
-;;;
-;;;
+
+;;; Encode and decode PNG files.
 
 (defmacro with-png-struct ((var &key (direction :input)) &body body)
   (let ((pointer (gensym "POINTER")))
@@ -211,7 +202,8 @@
 			  (:input 'png-create-read-struct)
 			  (:output 'png-create-write-struct))
 			  +png-libpng-ver-string+ (null-pointer)
-			  (callback error-fn) (callback warn-fn))))
+			  (callback error-fn) (callback warn-fn)))
+	   (*buffer* (make-shareable-byte-vector 1024)))
        (when (null-pointer-p ,var)
 	 (error "Failed to allocate PNG write struct."))
        (unwind-protect (progn ,@body)
@@ -272,14 +264,23 @@
   (zerop (logand color-type (lognot +png-color-mask-alpha+))))
 
 (defun decode (input)
-  "Read a PNG image from INPUT and return it as an array of type IMAGE.
+  "Reads an image in PNG format from input and returns an array of
+type IMAGE.  If the bit depth of the PNG file is less than or equal to
+8, an 8-BIT-IMAGE will be returned; otherwise, a 16-BIT-IMAGE will be
+returned.
 
-Return an 8-BIT-IMAGE if the bit depth of the PNG file is 8 bits or
-less, and otherwise return a 16-BIT-IMAGE.  The samples will be
-left-shifted as much as necessary to utilize the dynamic range of the
-full 8 or 16 bits; as an example, a PNG file with a depth of 2 bits,
-which therefore only uses the values 0, 1, 2, and 3 will result in an
-8-BIT-IMAGE with the values 0, 85, 170, and 255."
+Applications that would like to receive images of consistent bit
+depth (rather than 8 or 16 depending on the PNG file) can apply the
+function 8-BIT-IMAGE or the function 16-BIT-IMAGE to the result of
+DECODE.
+
+Bit depths less than 8 will be converted to 8 bits when read, and bit
+depths between 8 and 16 bits will be converted to 16 bits.  As an
+example, 2-bit PNG files contain only the pixel values 0, 1, 2, and 3.
+These will be converted to 0, 85, 170, and 255, respectively, in order
+to fill the dynamic range of the 8-bit image that is returned.
+
+Signals an error if reading the image fails."
   (with-png-struct (png-ptr :direction :input)
     (with-png-info-struct (info-ptr png-ptr (png-create-info-struct png-ptr))
       (with-png-info-struct (end-ptr png-ptr (png-create-info-struct png-ptr))
@@ -308,12 +309,17 @@ which therefore only uses the values 0, 1, 2, and 3 will result in an
 	      image)))))))
 
 (defun decode-file (pathname)
-  "Open the specified file and call DECODE on it."
   (with-open-file (input pathname :element-type '(unsigned-byte 8))
     (decode input)))
 
 (defun encode (image output)
-  "Write an image to a stream in PNG format."
+  "Writes IMAGE in PNG format to OUTPUT.  The current version always
+writes an 8-bit PNG file if image is an 8-BIT-IMAGE and a 16-bit PNG
+file if image is an 16-BIT-IMAGE.  Future versions may write PNG files
+of lower bit depths than IMAGE when the least significant bits may be
+trimmed without loss of precision.
+
+Signals an error if writing the image fails."
   (check-type image (or grayscale-image rgb-image))
   (with-png-struct (png-ptr :direction :output)
     (with-png-info-struct (info-ptr png-ptr (png-create-info-struct png-ptr))
@@ -336,28 +342,6 @@ which therefore only uses the values 0, 1, 2, and 3 will result in an
   t)
 
 (defun encode-file (image pathname)
-  "Open the specified file and use ENCODE to write the specified image
-to it."
   (with-open-file (output pathname :element-type '(unsigned-byte 8)
 			  :direction :output :if-exists :supersede)
     (encode image output)))
-
-;;;
-;;; Example.
-;;;
-
-(defun rotate (input-pathname output-pathname)
-  "Read a PNG image, rotate it 90 degrees, and write it to a new file."
-  (let* ((old (with-open-file (input input-pathname)
-		(png:decode input)))
-	 (new (png:make-image (png:image-width old)
-			      (png:image-height old)
-			      (png:image-channels old)))
-	 (m (png:image-width old)))
-      (dotimes (i (png:image-height new))
-	(dotimes (j (png:image-width new))
-	  (dotimes (k (png:image-channels new))
-	    (setf (aref new i j k) (aref old j (- m i 1) k)))))
-      (with-open-file (output output-pathname :direction :output
-			      :if-exists :supersede)
-	(png:encode new output))))
