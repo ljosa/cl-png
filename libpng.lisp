@@ -1,8 +1,3 @@
-;;; Bugs:
-;;;  * cffi-grovel: GCC 3.3 on DarwinPPC does not understand -m32.
-;;;  * Benchmarking and profiling.
-;;;  * Test on ECL.
-
 (in-package #:png)
 
 

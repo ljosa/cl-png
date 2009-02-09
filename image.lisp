@@ -90,12 +90,12 @@ height, width, number of channels, and bit depth as IMAGE."
       (setf (row-major-aref new i) (row-major-aref image i)))))
 
 (defun 8-bit-image (image)
-  "If IMAGE is an 8-BIT-IMAGE, return it.  If IMAGE is a 16-BIT-IMAGE,
-return an 8-BIT-IMAGE that has the same width, height, and number of
-channels as image, but where each element is the corresponding element
-in image divided by 257 and rounded to the nearest integer.  The
-effect of this division is to compress the dynamic range of the image
-so as to fit within the smaller bit depth."
+  "If IMAGE is an 8-BIT-IMAGE, return it or a copy of it.  If IMAGE is
+a 16-BIT-IMAGE, return an 8-BIT-IMAGE that has the same width, height,
+and number of channels as image, but where each element is the
+corresponding element in image divided by 257 and rounded to the
+nearest integer.  The effect of this division is to compress the
+dynamic range of the image so as to fit within the smaller bit depth."
   (etypecase image
     (8-bit-image image)
     (16-bit-image 
@@ -110,12 +110,12 @@ so as to fit within the smaller bit depth."
 	 (setf (aref v8 i) (round (aref v16 i) 257)))))))
     
 (defun 16-bit-image (image)
-  "If IMAGE is a 16-BIT-IMAGE, return it.  If IMAGE is an 8-BIT-IMAGE,
-return a 16-BIT-IMAGE that has the same width, height, and number of
-channels as IMAGE, but where each element is the corresponding element
-in image multiplied by 257.  The effect of this multiplication is to
-stretch the dynamic range of the image to utilize the increased bit
-depth."
+  "If IMAGE is a 16-BIT-IMAGE, return it or a copy of it.  If IMAGE is
+an 8-BIT-IMAGE, return a 16-BIT-IMAGE that has the same width, height,
+and number of channels as IMAGE, but where each element is the
+corresponding element in image multiplied by 257.  The effect of this
+multiplication is to stretch the dynamic range of the image to utilize
+the increased bit depth."
   (etypecase image
     (16-bit-image image)
     (8-bit-image 
