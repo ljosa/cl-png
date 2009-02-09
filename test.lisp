@@ -4,9 +4,12 @@
 
 (in-package #:png-test)
 
+;; ASDF:SYSTEM-RELATIVE-PATHNAME only exists in very recent versions
+;; of ASDF, so we'll do it this way.
 (defparameter *pngsuite-pathname*
-  #+asdf (asdf:system-relative-pathname '#:png "PngSuite/"))
-
+  #+asdf (merge-pathnames "PngSuite/" 
+			  (truename (asdf:system-definition-pathname 
+				     '#:png-test))))
 
 (defun decode-pngsuite (basename)
   (let ((pathname (merge-pathnames (make-pathname :name basename :type "png")

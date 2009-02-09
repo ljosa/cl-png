@@ -4,12 +4,48 @@
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
   <TITLE>CL-PNG</TITLE>
   <style type="text/css">
-    body { max-width: 80ex; }
+    body { }
     hr { color: #000; background-color: #000; height: 1px; }
+    div.narrow { max-width: 80ex; }
+    table.paste-area tr td { min-width: 80ex; }
+
+body { background: white; color: black; }
+.paste { background-color: #F4F4F4; color: black; }
+.paste:hover { background-color: #F4F4F4; color: black; }
+.symbol { color : #770055; background-color : transparent; border: 0px; margin: 0px;}
+a.symbol:link { color : #229955; background-color : transparent; text-decoration: none; border: 0px; margin: 0px; }
+a.symbol:active { color : #229955; background-color : transparent; text-decoration: none; border: 0px; margin: 0px; }
+a.symbol:visited { color : #229955; background-color : transparent; text-decoration: none; border: 0px; margin: 0px; }
+a.symbol:hover { color : #229955; background-color : transparent; text-decoration: none; border: 0px; margin: 0px; }
+.special { color : #FF5000; background-color : inherit; }
+.keyword { color : #770000; background-color : inherit; }
+.comment { color : #007777; background-color : inherit; }
+.string { color : #777777; background-color : inherit; }
+.atom { color : #314F4F; background-color : inherit; }
+.macro { color : #FF5000; background-color : inherit; }
+.variable { color : #36648B; background-color : inherit; }
+.function { color : #8B4789; background-color : inherit; }
+.attribute { color : #FF5000; background-color : inherit; }
+.character { color : #0055AA; background-color : inherit; }
+.syntaxerror { color : #FF0000; background-color : inherit; }
+span.paren1 { background-color : inherit; -webkit-transition: background-color 0.2s linear; }
+span.paren1:hover { color : inherit; background-color : #BAFFFF; }
+span.paren2 { background-color : inherit; -webkit-transition: background-color 0.2s linear; }
+span.paren2:hover { color : inherit; background-color : #FFCACA; }
+span.paren3 { background-color : inherit; -webkit-transition: background-color 0.2s linear; }
+span.paren3:hover { color : inherit; background-color : #FFFFBA; }
+span.paren4 { background-color : inherit; -webkit-transition: background-color 0.2s linear; }
+span.paren4:hover { color : inherit; background-color : #CACAFF; }
+span.paren5 { background-color : inherit; -webkit-transition: background-color 0.2s linear; }
+span.paren5:hover { color : inherit; background-color : #CAFFCA; }
+span.paren6 { background-color : inherit; -webkit-transition: background-color 0.2s linear; }
+span.paren6:hover { color : inherit; background-color : #FFBAFF; }
+
   </style>
 </HEAD>
 <BODY>
 
+<div class="narrow">
 <P><a href="http://www.ljosa.com/~ljosa/">Vebjorn Ljosa</a> »
 <a href="http://www.ljosa.com/~ljosa/software/">Software</a> » CL-PNG
 
@@ -61,7 +97,7 @@ before, and better able to handle corner cases.
   <li>SBCL on Linux (x86_64) and Mac OS X (i386)
   <li>Clozure CL on Mac OS X (ppc and x86_64)
   <li>CLISP on Linux (x86_64)
-  <li>Allegro CL on Mac OS X (i386)
+  <li>Allegro CL on Mac OS X (i386 and ppc)
   <li>LispWorks on Mac OS X (i386)
 </ul>
 <p>Please <a href="http://www.ljosa.com/~ljosa/contact">report</a> success/failure on other platforms.
@@ -119,25 +155,11 @@ string.
 <code>(lisp-unit:run-all-tests #:png-test)</code>.
 
 <h2><a name="Example">Example</a></h2>
+</div>
 
-<div style="background-color: #000000;"><pre><span style="color: #ffffff;">(<span style="color: #00ffff;">defun</span> <span style="color: #87cefa;">rotate</span> (input-pathname output-pathname)
-  <span style="color: #ffa07a;">"Read a PNG image, rotate it 90 degrees, and write it to a new file."</span>
-  (<span style="color: #ffffff;">let*</span> ((old (<span style="color: #00ffff;">with-open-file</span> (input input-pathname)
-		(<a href="#decode" style="color: #ffffff">png:decode</a> input)))
-	 (new (png:make-image (<a href="#image-width" style="color: #ffffff">png:image-width</a> old)
-			      (<a href="#image-height" style="color: #ffffff">png:image-height</a> old)
-			      (<a href="#image-channels" style="color: #ffffff">png:image-channels</a> old)))
-	 (m (<a href="#image-width" style="color: #ffffff">png:image-width</a> old)))
-      (<span style="color: #00ffff;">dotimes</span> (i (<a href="#image-height" style="color: #ffffff">png:image-height</a> new))
-	(<span style="color: #00ffff;">dotimes</span> (j (<a href="#image-width" style="color: #ffffff">png:image-width</a> new))
-	  (<span style="color: #00ffff;">dotimes</span> (k (<a href="#image-channels" style="color: #ffffff">png:image-channels</a> new))
-	    (setf (aref new i j k) (aref old j (- m i 1) k)))))
-      (<span style="color: #00ffff;">with-open-file</span> (output output-pathname <span style="color: #b0c4de;">:direction</span> <span style="color: #b0c4de;">:output</span>
-			      <span style="color: #b0c4de;">:if-exists</span> <span style="color: #b0c4de;">:supersede</span>)
-	(<a href="#encode" style="color: #ffffff">png:encode</a> new output))))
-</span>
-</pre></div>
+<table class="paste-area"><tr><td bgcolor="#F4F4F4" colspan="2" width="100%"><tt><span class="paste"><span class="paren1">(<span class="paste"><a href="http://www.lispworks.com/reference/HyperSpec/Body/m_defun.htm" class="symbol"><i><span class="symbol">defun</span></i></a> rotate <span class="paren2">(<span class="paste">input-pathname output-pathname</span>)</span><br>&nbsp;&nbsp;<span class="string">"Read a PNG image, rotate it 90 degrees, and write it to a new file."</span><br>&nbsp;&nbsp;<span class="paren2">(<span class="paste"><a href="http://www.lispworks.com/reference/HyperSpec/Body/s_let_l.htm" class="symbol"><i><span class="symbol">let*</span></i></a> <span class="paren3">(<span class="paste"><span class="paren4">(<span class="paste">old <span class="paren5">(<span class="paste"><a href="http://www.lispworks.com/reference/HyperSpec/Body/m_w_open.htm" class="symbol"><i><span class="symbol">with-open-file</span></i></a> <span class="paren6">(<span class="paste">input input-pathname <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">:element-type</span> '<span class="paren1">(<span class="paste"><a href="http://www.lispworks.com/reference/HyperSpec/Body/t_unsgn_.htm" class="symbol">unsigned-byte</a> 8</span>)</span></span>)</span><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="paren6">(<span class="paste"><a href="#decode" class="symbol">png:decode</a> input</span>)</span></span>)</span></span>)</span><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="paren4">(<span class="paste">new <span class="paren5">(<span class="paste"><a href="#make-image" class="symbol">png:make-image</a> <span class="paren6">(<span class="paste"><a href="#image-width" class="symbol">png:image-width</a> old</span>)</span><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="paren6">(<span class="paste"><a href="#image-height" class="symbol">png:image-height</a> old</span>)</span><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="paren6">(<span class="paste"><a href="#image-channels" class="symbol">png:image-channels</a> old</span>)</span></span>)</span></span>)</span><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="paren4">(<span class="paste">m <span class="paren5">(<span class="paste"><a href="#image-width" class="symbol">png:image-width</a> old</span>)</span></span>)</span></span>)</span><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="paren3">(<span class="paste"><a href="http://www.lispworks.com/reference/HyperSpec/Body/m_dotime.htm" class="symbol">dotimes</a> <span class="paren4">(<span class="paste">i <span class="paren5">(<span class="paste"><a href="#image-height" class="symbol">png:image-height</a> new</span>)</span></span>)</span><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="paren4">(<span class="paste"><a href="http://www.lispworks.com/reference/HyperSpec/Body/m_dotime.htm" class="symbol">dotimes</a> <span class="paren5">(<span class="paste">j <span class="paren6">(<span class="paste"><a href="#image-width" class="symbol">png:image-width</a> new</span>)</span></span>)</span><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;<span class="paren5">(<span class="paste"><a href="http://www.lispworks.com/reference/HyperSpec/Body/m_dotime.htm" class="symbol">dotimes</a> <span class="paren6">(<span class="paste">k <span class="paren1">(<span class="paste"><a href="#image-channels" class="symbol">png:image-channels</a> new</span>)</span></span>)</span><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;<span class="paren6">(<span class="paste"><a href="http://www.lispworks.com/reference/HyperSpec/Body/a_setf.htm" class="symbol">setf</a> <span class="paren1">(<span class="paste"><a href="http://www.lispworks.com/reference/HyperSpec/Body/f_aref.htm" class="symbol">aref</a> new i j k</span>)</span> <span class="paren1">(<span class="paste"><a href="http://www.lispworks.com/reference/HyperSpec/Body/f_aref.htm" class="symbol">aref</a> old j <span class="paren2">(<span class="paste"><a href="http://www.lispworks.com/reference/HyperSpec/Body/a__.htm" class="symbol">-</a> m i 1</span>)</span> k</span>)</span></span>)</span></span>)</span></span>)</span></span>)</span><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="paren3">(<span class="paste"><a href="http://www.lispworks.com/reference/HyperSpec/Body/m_w_open.htm" class="symbol"><i><span class="symbol">with-open-file</span></i></a> <span class="paren4">(<span class="paste">output output-pathname <span class="keyword">:element-type</span> '<span class="paren5">(<span class="paste"><a href="http://www.lispworks.com/reference/HyperSpec/Body/t_unsgn_.htm" class="symbol">unsigned-byte</a> 8</span>)</span><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">:direction</span> <span class="keyword">:output</span> <span class="keyword">:if-exists</span> <span class="keyword">:supersede</span></span>)</span><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="paren4">(<span class="paste"><a href="#encode" class="symbol">png:encode</a> new output</span>)</span></span>)</span></span>)</span></span>)</span></span></tt></td></tr></table>
 
+<div class="narrow">
 <h2><a name="API">API reference</a></h2>
 
 <p><a name="image"><i>Type</i> <b>IMAGE</b></a>
@@ -548,6 +570,6 @@ if writing the image fails.
 <hr>
 
 <p>Last updated: 2009-02-08</p>
-
+</div>
 </BODY>
 </HTML>
