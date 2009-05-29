@@ -8,6 +8,8 @@
   (:export #:image #:8-bit-image #:16-bit-image #:grayscale-image #:rgb-image
 	   #:make-image #:copy-image
 	   #:image-height #:image-width #:image-channels #:image-bit-depth
-	   #:decode #:encode))
+	   #:decode #:encode
+	   #:decode-bmp
+	   ))
 
 

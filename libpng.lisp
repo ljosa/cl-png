@@ -91,6 +91,9 @@
   (compression-type :int)
   (filter-type :int))
 
+(defcfun "png_set_bgr" :void
+  (png-ptr :pointer))
+
 (defcfun "png_set_palette_to_rgb" :void
   (png-ptr :pointer))
 
@@ -196,8 +199,8 @@
     `(let ((,var (,(ecase direction
 			  (:input 'png-create-read-struct)
 			  (:output 'png-create-write-struct))
-			  +png-libpng-ver-string+ (null-pointer)
-			  (callback error-fn) (callback warn-fn)))
+		   +png-libpng-ver-string+ (null-pointer)
+		   (callback error-fn) (callback warn-fn)))
 	   (*buffer* (make-shareable-byte-vector 1024)))
        (when (null-pointer-p ,var)
 	 (error "Failed to allocate PNG write struct."))
@@ -307,7 +310,7 @@ Signals an error if reading the image fails."
   (with-open-file (input pathname :element-type '(unsigned-byte 8))
     (decode input)))
 
-(defun encode (image output)
+(defun encode (image output &key swapbgr)
   "Writes IMAGE in PNG format to OUTPUT.  The current version always
 writes an 8-bit PNG file if image is an 8-BIT-IMAGE and a 16-bit PNG
 file if image is an 16-BIT-IMAGE.  Future versions may write PNG files
@@ -328,6 +331,8 @@ Signals an error if writing the image fails."
 			  +png-color-type-rgb+)
 		      +png-interlace-none+ +png-compression-type-default+
 		      +png-filter-type-default+)
+	(when swapBGR
+	  (png-set-bgr png-ptr))
 	(with-row-pointers (row-pointers image)
 	  (png-set-rows png-ptr info-ptr row-pointers)
 	  (png-write-png png-ptr info-ptr 
@@ -336,7 +341,7 @@ Signals an error if writing the image fails."
 			 (null-pointer))))))
   t)
 
-(defun encode-file (image pathname)
+(defun encode-file (image pathname &key swapbgr)
   (with-open-file (output pathname :element-type '(unsigned-byte 8)
 			  :direction :output :if-exists :supersede)
-    (encode image output)))
+    (encode image output :swapbgr swapbgr)))

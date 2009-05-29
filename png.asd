@@ -19,6 +19,7 @@
 	       (:file "compat" :depends-on ("package"))
 	       (:file "image" :depends-on ("package" "compat"))
 	       (:file "libpng" :depends-on ("grovel" "image" "compat"))
+	       (:file "bmp" :depends-on ("libpng" "image"))
 	       (cffi-grovel:grovel-file "grovel" :depends-on ("package")))
   :depends-on (#:cffi))
 

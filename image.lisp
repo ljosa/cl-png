@@ -89,6 +89,7 @@ height, width, number of channels, and bit depth as IMAGE."
     (dotimes (i (array-total-size image) new)
       (setf (row-major-aref new i) (row-major-aref image i)))))
 
+#+ignore
 (defun 8-bit-image (image)
   "If IMAGE is an 8-BIT-IMAGE, return it or a copy of it.  If IMAGE is
 a 16-BIT-IMAGE, return an 8-BIT-IMAGE that has the same width, height,
@@ -108,7 +109,8 @@ dynamic range of the image so as to fit within the smaller bit depth."
        (dotimes (i (array-total-size v16) new)
 	 ;; TODO: Bitfidling may be faster.
 	 (setf (aref v8 i) (round (aref v16 i) 257)))))))
-    
+
+#+ignore    
 (defun 16-bit-image (image)
   "If IMAGE is a 16-BIT-IMAGE, return it or a copy of it.  If IMAGE is
 an 8-BIT-IMAGE, return a 16-BIT-IMAGE that has the same width, height,
