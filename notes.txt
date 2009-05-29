@@ -1,0 +1,4 @@
+
+
+Lispworks requires that the array be allocated in the static area.
+SYSTEM:STATICP can tell us whether it is.
