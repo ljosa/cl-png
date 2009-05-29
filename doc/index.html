@@ -4,10 +4,15 @@
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
   <TITLE>CL-PNG</TITLE>
   <style type="text/css">
-    body { }
-    hr { color: #000; background-color: #000; height: 1px; }
-    div.narrow { max-width: 80ex; }
-    table.paste-area tr td { min-width: 80ex; }
+
+body { }
+hr { 
+  color: #000;
+  background-color: #000;
+  height: 1px;
+}
+div.narrow { max-width: 80ex; }
+table.paste-area tr td { min-width: 80ex; }
 
 body { background: white; color: black; }
 .paste { background-color: #F4F4F4; color: black; }
@@ -40,7 +45,10 @@ span.paren5 { background-color : inherit; -webkit-transition: background-color 0
 span.paren5:hover { color : inherit; background-color : #CAFFCA; }
 span.paren6 { background-color : inherit; -webkit-transition: background-color 0.2s linear; }
 span.paren6:hover { color : inherit; background-color : #FFBAFF; }
-
+td.example { 
+  background-color: #F4F4F4; 
+  width: 100%;
+}
   </style>
 </HEAD>
 <BODY>
@@ -75,6 +83,16 @@ details.  This manual is in the public domain.
 
 <h2><a name="Status">Status</a></h2>
 
+<p>CL-PNG 0.6 has been verified to work on the following platforms.
+<ul>
+  <li>SBCL on Linux (x86_64) and Mac OS X (i386)
+  <li>Clozure CL on Mac OS X (ppc and x86_64)
+  <li>CLISP on Linux (x86_64)
+  <li>Allegro CL on Mac OS X (i386 and ppc)
+  <li>LispWorks on Mac OS X (i386)
+</ul>
+<p>Please <a href="http://www.ljosa.com/~ljosa/contact">report</a> success/failure on other platforms.
+
 <p>Since version 0.5, CL-PNG uses a foreign function interface to call
 <a href="http://www.libpng.org/pub/png/libpng.html">libpng</a>, the
 official PNG reference library.  As a result, it benefits from all the
@@ -92,16 +110,15 @@ before, and better able to handle corner cases.
   ignored when reading an image.
 </ul>
 
-<p>CL-PNG 0.6 has been verified to work on the following platforms.
+<p>News in version 0.6:</p>
 <ul>
-  <li>SBCL on Linux (x86_64) and Mac OS X (i386)
-  <li>Clozure CL on Mac OS X (ppc and x86_64)
-  <li>CLISP on Linux (x86_64)
-  <li>Allegro CL on Mac OS X (i386 and ppc)
-  <li>LispWorks on Mac OS X (i386)
+  <li>Can now read from and write to Lisp streams, even those without
+  file descriptors
+  <li>Fixed bug causing crash on 64-bit platforms
+  <li>Can now read, write, and represent 16-bit images.  (Previously
+  downscaled to 8 bits on read.)
+  <li>Fixed bug in reading of 1, 2, and 4-bit images on CCL DarwinPPC.
 </ul>
-<p>Please <a href="http://www.ljosa.com/~ljosa/contact">report</a> success/failure on other platforms.
-
 
 <h2><a name="Download">Download</a></h2>
 
@@ -157,7 +174,7 @@ string.
 <h2><a name="Example">Example</a></h2>
 </div>
 
-<table class="paste-area"><tr><td bgcolor="#F4F4F4" colspan="2" width="100%"><tt><span class="paste"><span class="paren1">(<span class="paste"><a href="http://www.lispworks.com/reference/HyperSpec/Body/m_defun.htm" class="symbol"><i><span class="symbol">defun</span></i></a> rotate <span class="paren2">(<span class="paste">input-pathname output-pathname</span>)</span><br>&nbsp;&nbsp;<span class="string">"Read a PNG image, rotate it 90 degrees, and write it to a new file."</span><br>&nbsp;&nbsp;<span class="paren2">(<span class="paste"><a href="http://www.lispworks.com/reference/HyperSpec/Body/s_let_l.htm" class="symbol"><i><span class="symbol">let*</span></i></a> <span class="paren3">(<span class="paste"><span class="paren4">(<span class="paste">old <span class="paren5">(<span class="paste"><a href="http://www.lispworks.com/reference/HyperSpec/Body/m_w_open.htm" class="symbol"><i><span class="symbol">with-open-file</span></i></a> <span class="paren6">(<span class="paste">input input-pathname <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">:element-type</span> '<span class="paren1">(<span class="paste"><a href="http://www.lispworks.com/reference/HyperSpec/Body/t_unsgn_.htm" class="symbol">unsigned-byte</a> 8</span>)</span></span>)</span><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="paren6">(<span class="paste"><a href="#decode" class="symbol">png:decode</a> input</span>)</span></span>)</span></span>)</span><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="paren4">(<span class="paste">new <span class="paren5">(<span class="paste"><a href="#make-image" class="symbol">png:make-image</a> <span class="paren6">(<span class="paste"><a href="#image-width" class="symbol">png:image-width</a> old</span>)</span><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="paren6">(<span class="paste"><a href="#image-height" class="symbol">png:image-height</a> old</span>)</span><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="paren6">(<span class="paste"><a href="#image-channels" class="symbol">png:image-channels</a> old</span>)</span><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="paren6">(<span class="paste"><a href="#image-bit-depth" class="symbol">png:image-bit-depth</a> old</span>)</span></span>)</span></span>)</span><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="paren4">(<span class="paste">m <span class="paren5">(<span class="paste"><a href="#image-width" class="symbol">png:image-width</a> old</span>)</span></span>)</span></span>)</span><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="paren3">(<span class="paste"><a href="http://www.lispworks.com/reference/HyperSpec/Body/m_dotime.htm" class="symbol">dotimes</a> <span class="paren4">(<span class="paste">i <span class="paren5">(<span class="paste"><a href="#image-height" class="symbol">png:image-height</a> new</span>)</span></span>)</span><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="paren4">(<span class="paste"><a href="http://www.lispworks.com/reference/HyperSpec/Body/m_dotime.htm" class="symbol">dotimes</a> <span class="paren5">(<span class="paste">j <span class="paren6">(<span class="paste"><a href="#image-width" class="symbol">png:image-width</a> new</span>)</span></span>)</span><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;<span class="paren5">(<span class="paste"><a href="http://www.lispworks.com/reference/HyperSpec/Body/m_dotime.htm" class="symbol">dotimes</a> <span class="paren6">(<span class="paste">k <span class="paren1">(<span class="paste"><a href="#image-channels" class="symbol">png:image-channels</a> new</span>)</span></span>)</span><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;<span class="paren6">(<span class="paste"><a href="http://www.lispworks.com/reference/HyperSpec/Body/a_setf.htm" class="symbol">setf</a> <span class="paren1">(<span class="paste"><a href="http://www.lispworks.com/reference/HyperSpec/Body/f_aref.htm" class="symbol">aref</a> new i j k</span>)</span> <span class="paren1">(<span class="paste"><a href="http://www.lispworks.com/reference/HyperSpec/Body/f_aref.htm" class="symbol">aref</a> old j <span class="paren2">(<span class="paste"><a href="http://www.lispworks.com/reference/HyperSpec/Body/a__.htm" class="symbol">-</a> m i 1</span>)</span> k</span>)</span></span>)</span></span>)</span></span>)</span></span>)</span><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="paren3">(<span class="paste"><a href="http://www.lispworks.com/reference/HyperSpec/Body/m_w_open.htm" class="symbol"><i><span class="symbol">with-open-file</span></i></a> <span class="paren4">(<span class="paste">output output-pathname <span class="keyword">:element-type</span> '<span class="paren5">(<span class="paste"><a href="http://www.lispworks.com/reference/HyperSpec/Body/t_unsgn_.htm" class="symbol">unsigned-byte</a> 8</span>)</span><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">:direction</span> <span class="keyword">:output</span> <span class="keyword">:if-exists</span> <span class="keyword">:supersede</span></span>)</span><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="paren4">(<span class="paste"><a href="#encode" class="symbol">png:encode</a> new output</span>)</span></span>)</span></span>)</span></span>)</span></span></tt></td></tr></table>
+<table class="paste-area"><tr><td class="example"><tt><span class="paste"><span class="paren1">(<span class="paste"><a href="http://www.lispworks.com/reference/HyperSpec/Body/m_defun.htm" class="symbol"><i><span class="symbol">defun</span></i></a> rotate <span class="paren2">(<span class="paste">input-pathname output-pathname</span>)</span><br>&nbsp;&nbsp;<span class="string">"Read a PNG image, rotate it 90 degrees, and write it to a new file."</span><br>&nbsp;&nbsp;<span class="paren2">(<span class="paste"><a href="http://www.lispworks.com/reference/HyperSpec/Body/s_let_l.htm" class="symbol"><i><span class="symbol">let*</span></i></a> <span class="paren3">(<span class="paste"><span class="paren4">(<span class="paste">old <span class="paren5">(<span class="paste"><a href="http://www.lispworks.com/reference/HyperSpec/Body/m_w_open.htm" class="symbol"><i><span class="symbol">with-open-file</span></i></a> <span class="paren6">(<span class="paste">input input-pathname <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">:element-type</span> '<span class="paren1">(<span class="paste"><a href="http://www.lispworks.com/reference/HyperSpec/Body/t_unsgn_.htm" class="symbol">unsigned-byte</a> 8</span>)</span></span>)</span><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="paren6">(<span class="paste"><a href="#decode" class="symbol">png:decode</a> input</span>)</span></span>)</span></span>)</span><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="paren4">(<span class="paste">new <span class="paren5">(<span class="paste"><a href="#make-image" class="symbol">png:make-image</a> <span class="paren6">(<span class="paste"><a href="#image-width" class="symbol">png:image-width</a> old</span>)</span><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="paren6">(<span class="paste"><a href="#image-height" class="symbol">png:image-height</a> old</span>)</span><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="paren6">(<span class="paste"><a href="#image-channels" class="symbol">png:image-channels</a> old</span>)</span><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="paren6">(<span class="paste"><a href="#image-bit-depth" class="symbol">png:image-bit-depth</a> old</span>)</span></span>)</span></span>)</span><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="paren4">(<span class="paste">m <span class="paren5">(<span class="paste"><a href="#image-width" class="symbol">png:image-width</a> old</span>)</span></span>)</span></span>)</span><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="paren3">(<span class="paste"><a href="http://www.lispworks.com/reference/HyperSpec/Body/m_dotime.htm" class="symbol">dotimes</a> <span class="paren4">(<span class="paste">i <span class="paren5">(<span class="paste"><a href="#image-height" class="symbol">png:image-height</a> new</span>)</span></span>)</span><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="paren4">(<span class="paste"><a href="http://www.lispworks.com/reference/HyperSpec/Body/m_dotime.htm" class="symbol">dotimes</a> <span class="paren5">(<span class="paste">j <span class="paren6">(<span class="paste"><a href="#image-width" class="symbol">png:image-width</a> new</span>)</span></span>)</span><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;<span class="paren5">(<span class="paste"><a href="http://www.lispworks.com/reference/HyperSpec/Body/m_dotime.htm" class="symbol">dotimes</a> <span class="paren6">(<span class="paste">k <span class="paren1">(<span class="paste"><a href="#image-channels" class="symbol">png:image-channels</a> new</span>)</span></span>)</span><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;<span class="paren6">(<span class="paste"><a href="http://www.lispworks.com/reference/HyperSpec/Body/a_setf.htm" class="symbol">setf</a> <span class="paren1">(<span class="paste"><a href="http://www.lispworks.com/reference/HyperSpec/Body/f_aref.htm" class="symbol">aref</a> new i j k</span>)</span> <span class="paren1">(<span class="paste"><a href="http://www.lispworks.com/reference/HyperSpec/Body/f_aref.htm" class="symbol">aref</a> old j <span class="paren2">(<span class="paste"><a href="http://www.lispworks.com/reference/HyperSpec/Body/a__.htm" class="symbol">-</a> m i 1</span>)</span> k</span>)</span></span>)</span></span>)</span></span>)</span></span>)</span><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="paren3">(<span class="paste"><a href="http://www.lispworks.com/reference/HyperSpec/Body/m_w_open.htm" class="symbol"><i><span class="symbol">with-open-file</span></i></a> <span class="paren4">(<span class="paste">output output-pathname <span class="keyword">:element-type</span> '<span class="paren5">(<span class="paste"><a href="http://www.lispworks.com/reference/HyperSpec/Body/t_unsgn_.htm" class="symbol">unsigned-byte</a> 8</span>)</span><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">:direction</span> <span class="keyword">:output</span> <span class="keyword">:if-exists</span> <span class="keyword">:supersede</span></span>)</span><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="paren4">(<span class="paste"><a href="#encode" class="symbol">png:encode</a> new output</span>)</span></span>)</span></span>)</span></span>)</span></span></tt></td></tr></table>
 
 <div class="narrow">
 <h2><a name="API">API reference</a></h2>
@@ -182,12 +199,14 @@ In other words, <tt>(aref image i j k)</tt> is the intensity in the
 href="http://www.lispworks.com/documentation/HyperSpec/Body/t_smp_ar.htm"><b>simple-array</b></a>
 with the same total number of elements, but applications should not
 rely on this implementation detail, as it is likely to change in
-future versions.  The functions <a
-href="#make-image"><b>make-image</b></a>, <a
-href="#decode"><b>decode</b></a>, <a
-href="#copy-image"><b>copy-image</b></a>, <a
-href="#f_8-bit-image"><b>8-bit-image</b></a>, and <a
-href="#f_16-bit-image"><b>16-bit-image</b></a> return images.</p>
+future versions.  Also, the <a
+href="http://www.lispworks.com/documentation/HyperSpec/Body/t_smp_ar.htm"><b>simple-array</b></a>
+must be allocated in the a static area on some Lisp implementations.
+For these reasons, you should use <a
+href="#make-image"><b>make-image</b></a> to make your images rather
+than call <a
+href="http://www.lispworks.com/documentation/HyperSpec/Body/f_mk_ar.htm"><b>make-array</b></a>
+directly.
 
 
 <p><b>Compound Type Specifier Kind:</b>
@@ -434,7 +453,7 @@ the bit-depth of a <a href="#16-bit-image"><b>16-bit-image</b></a> is
 elements of the new image are the <a
 href="http://www.lispworks.com/documentation/HyperSpec/Body/26_glo_s.htm#same">same</a>
 as the corresponding elements of <i>image</i>, and <i>copied-image</i>
-has the same</a> height, width, number of channels, and bit depth as
+has the same height, width, number of channels, and bit depth as
 <i>image</i>.</p>
 
 <hr>
