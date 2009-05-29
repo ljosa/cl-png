@@ -5,26 +5,13 @@
 
 (in-package #:png)
 
-
-(defun image-displaced-to-buffer-p (image)
-  (multiple-value-bind (displacement index) (array-displacement image)
-    (and displacement
-        (zerop index)
-        (typep (array-displacement image) 
-               (list #+allegro 'array
-                     #-allegro 'simple-array
-                     (array-element-type image)
-                     (list (reduce #'* (array-dimensions image))))))))
-  
 (deftype 8-bit-image (&optional height width channels)
   "An IMAGE with element type (UNSIGNED-BYTE 8)."
-  `(and (array (unsigned-byte 8) (,height ,width ,channels))
-        (satisfies image-displaced-to-buffer-p)))
+  `(array (unsigned-byte 8) (,height ,width ,channels)))
 
 (deftype 16-bit-image (&optional height width channels)
   "An IMAGE with element type (UNSIGNED-BYTE 16)."
-  `(and (array (unsigned-byte 16) (,height ,width ,channels))
-	(satisfies image-displaced-to-buffer-p)))
+  `(array (unsigned-byte 16) (,height ,width ,channels)))
 
 (deftype image (&optional height width channels)
   "A three-dimensional array of (unsigned-byte 8) or (unsigned-byte
@@ -54,12 +41,10 @@ channels.  The image will be an 8-bit-image or a 16-bit-image depending
 on the value of byte-size.  Makes an 8-BIT-IMAGE if BIT-DEPTH is 8 or
 NIL and a 16-BIT-IMAGE if BIT-DEPTH is 16.  The contents of the image
 are undefined."
-  (make-array (list height width channels) 
-	      :element-type (ecase bit-depth
-			      ((8 nil) '(unsigned-byte 8))
-			      (16 '(unsigned-byte 16)))
-	      :displaced-to (make-shareable-byte-vector
-			     (* height width channels) (or bit-depth 8))))
+  (make-shareable-array (list height width channels) 
+			:element-type (ecase bit-depth
+					((8 nil) '(unsigned-byte 8))
+					(16 '(unsigned-byte 16)))))
 
 (defun image-height (image) 
   "The height of image, i.e., the number of rows."
@@ -99,15 +84,12 @@ dynamic range of the image so as to fit within the smaller bit depth."
   (etypecase image
     (8-bit-image image)
     (16-bit-image 
-     (let* ((new (make-image (image-height image) (image-width image)
-			     (image-channels image) 8))
-	    (v16 (array-displacement image))
-	    (v8 (array-displacement new)))
-       (declare (type (simple-array (unsigned-byte 8) 1) v8)
-		(type (simple-array (unsigned-byte 16) 1) v16))
-       (dotimes (i (array-total-size v16) new)
+     (let ((new (make-image (image-height image) (image-width image)
+			    (image-channels image) 8)))
+       (dotimes (i (array-total-size image) new)
 	 ;; TODO: Bitfidling may be faster.
-	 (setf (aref v8 i) (round (aref v16 i) 257)))))))
+	 (setf (row-major-aref new i) (round (row-major-aref image i) 
+					     257)))))))
     
 (defun 16-bit-image (image)
   "If IMAGE is a 16-BIT-IMAGE, return it or a copy of it.  If IMAGE is
@@ -119,11 +101,7 @@ the increased bit depth."
   (etypecase image
     (16-bit-image image)
     (8-bit-image 
-     (let* ((new (make-image (image-height image) (image-width image)
-			     (image-channels image) 16))
-	    (v8 (array-displacement image))
-	    (v16 (array-displacement new)))
-       (declare (type (simple-array (unsigned-byte 8) 1) v8)
-		(type (simple-array (unsigned-byte 16) 1) v16))
-       (dotimes (i (length v8) new)
-	 (setf (aref v16 i) (* 257 (aref v8 i))))))))
+     (let ((new (make-image (image-height image) (image-width image)
+			    (image-channels image) 16)))
+       (dotimes (i (array-total-size image) new)
+	 (setf (row-major-aref new i) (* 257 (row-major-aref image i))))))))
