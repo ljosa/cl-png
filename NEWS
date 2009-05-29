@@ -1,6 +1,5 @@
-Version 0.6
- - Can now read and write from Lisp streams in general, not just those
-   that have file descriptors.
+Version 0.6 (2009-02-08)
+ - Read and write from Lisp streams, also those without file descriptors
  - Added unit tests.
  - Fixed pointer size bug causing memory fault on SBCL Linux x86_64.
  - Read, write, and represent 16-bit images.  (Previously downscaled
