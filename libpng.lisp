@@ -261,7 +261,7 @@
 (defun grayp (color-type)
   (zerop (logand color-type (lognot +png-color-mask-alpha+))))
 
-(defun decode (input)
+(defun decode (input &key swapbgr)
   "Reads an image in PNG format from input and returns an array of
 type IMAGE.  If the bit depth of the PNG file is less than or equal to
 8, an 8-BIT-IMAGE will be returned; otherwise, a 16-BIT-IMAGE will be
@@ -277,6 +277,8 @@ depths between 8 and 16 bits will be converted to 16 bits.  As an
 example, 2-bit PNG files contain only the pixel values 0, 1, 2, and 3.
 These will be converted to 0, 85, 170, and 255, respectively, in order
 to fill the dynamic range of the 8-bit image that is returned.
+
+Swaps blue and red if SWAPBGR set.
 
 Signals an error if reading the image fails."
   (with-png-struct (png-ptr :direction :input)
@@ -298,6 +300,8 @@ Signals an error if reading the image fails."
 	      (png-set-swap png-ptr))
 	    (unless (zerop (logand color-type +png-color-mask-alpha+))
 	      (png-set-strip-alpha png-ptr))
+        (when swapBGR
+          (png-set-bgr png-ptr))
 	    (let ((image (make-image height width
 				     (if (grayp color-type) 1 3)
 				     (if (= 16 bit-depth) 16 8))))
@@ -306,9 +310,9 @@ Signals an error if reading the image fails."
 		(png-read-image png-ptr row-pointers))
 	      image)))))))
 
-(defun decode-file (pathname)
+(defun decode-file (pathname &key swapbgr)
   (with-open-file (input pathname :element-type '(unsigned-byte 8))
-    (decode input)))
+    (decode input :swapbgr swapbgr)))
 
 (defun encode (image output &key swapbgr)
   "Writes IMAGE in PNG format to OUTPUT.  The current version always
