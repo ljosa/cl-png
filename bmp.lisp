@@ -49,45 +49,44 @@ Signals an error if reading the image fails."
   ;; Read rest of header
   (let ((hd (make-bmp-header)))
     (setf (bmp-header-file-sz hd) (read-u4le input)
-	  (bmp-header-reserve hd) (read-u4le input)
-	  (bmp-header-raster-data-offset hd) (read-u4le input)
-	  (bmp-header-sz hd) (read-u4le input)
-	  (bmp-header-cols hd) (read-u4le input)
-	  (bmp-header-rows hd) (read-u4le input)
-	  (bmp-header-planes hd) (read-u2le input)
-	  (bmp-header-bitcount hd) (read-u2le input)
-	  (bmp-header-compression hd) (read-u4le input)
-	  (bmp-header-image-sz hd) (read-u4le input)
-	  (bmp-header-ppm hd) (list (read-u4le input)
-				    (read-u4le input))
-	  (bmp-header-colors hd) (list (read-u4le input)
-				       (read-u4le input)))
+          (bmp-header-reserve hd) (read-u4le input)
+          (bmp-header-raster-data-offset hd) (read-u4le input)
+          (bmp-header-sz hd) (read-u4le input)
+          (bmp-header-cols hd) (read-u4le input)
+          (bmp-header-rows hd) (read-u4le input)
+          (bmp-header-planes hd) (read-u2le input)
+          (bmp-header-bitcount hd) (read-u2le input)
+          (bmp-header-compression hd) (read-u4le input)
+          (bmp-header-image-sz hd) (read-u4le input)
+          (bmp-header-ppm hd) (list (read-u4le input)
+                                    (read-u4le input))
+          (bmp-header-colors hd) (list (read-u4le input)
+                                       (read-u4le input)))
     ;; Note: one cannot always count on the image-sz being set
     ;; in a BMP file, but it can be calculated from the filesize and
     ;; the raster-data-offset, both of which must be.
     (setf (bmp-header-image-sz hd) (- (bmp-header-file-sz hd)
-				      (bmp-header-raster-data-offset hd)))
+                                      (bmp-header-raster-data-offset hd)))
     (let* ((channels (floor (bmp-header-image-sz hd)
-			    (bmp-pixels hd)))
-	   (bit-depth (/ (bmp-header-bitcount hd) channels))
-	   (image (make-image (bmp-header-rows hd)
-			      (bmp-header-cols hd)
-			      channels
-			      (if (= 16 bit-depth) 16 8)))
-	   (np (mod (bmp-header-cols hd) 4))
-	   (npad (when (> np 0) np)))
-      (png::with-row-pointers (rptr image)
-	(dotimes (row (image-height image))
-	  (dotimes (col (image-width image))
-	    (dotimes (chan channels)
-	      (setf (aref image
-			  (if flip (- (image-height image) row 1) row)
-			  col
-			  chan)
-		    (read-byte input))))
-	  (when npad
-	    (dotimes (c npad)
-	      (read-byte input)))))
+                            (bmp-pixels hd)))
+           (bit-depth (/ (bmp-header-bitcount hd) channels))
+           (image (make-image (bmp-header-rows hd)
+                              (bmp-header-cols hd)
+                              channels
+                              (if (= 16 bit-depth) 16 8)))
+           (np (mod (bmp-header-cols hd) 4))
+           (npad (when (> np 0) np)))
+      (dotimes (row (image-height image))
+        (dotimes (col (image-width image))
+          (dotimes (chan channels)
+            (setf (aref image
+                        (if flip (- (image-height image) row 1) row)
+                        col
+                        chan)
+                  (read-byte input))))
+        (when npad
+          (dotimes (c npad)
+            (read-byte input))))
       image)))
 
 (defun decode-bmp-file (pathname &key flip)
@@ -97,20 +96,3 @@ the image vertically if FLIP not NULL. "
     (decode-bmp input :flip flip)))
 
 
-#|
-(png::encode-file (decode-bmp-file "bmp-images/scene.bmp" :flip T)
-		  "test.png" :swapbgr T)
-
-(png::encode-file (decode-bmp-file "bmp-images/scene-w767.bmp" :flip T)
-		  "test.png" :swapbgr T)
-
-(png::encode-file (decode-bmp-file "bmp-images/scene-w766.bmp" :flip T)
-		  "test.png" :swapbgr T)
-
-(png::encode-file (decode-bmp-file "bmp-images/scene-w765.bmp" :flip T)
-		  "test.png" :swapbgr T)
-
-(png::encode-file (decode-bmp-file "bmp-images/cloud-32.bmp")
-		  "test.png" :swapbgr T)
-
-|#
