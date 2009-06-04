@@ -1,5 +1,5 @@
 (defpackage #:png-test
-  (:use #:common-lisp #:lisp-unit #:png)
+  (:use #:common-lisp #:lisp-unit #:image #:png)
   (:export #:*pngsuite-pathname*))
 
 (in-package #:png-test)

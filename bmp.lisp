@@ -213,7 +213,7 @@ Signals an error if writing the image fails."
                         output)))
         (when padbytes
           (dotimes (c npad)
-            (write-byte 0 output))))))))
+            (write-byte 0 output)))))))
 
 (defun encode-bmp-file (image pathname &key flip)
   "Encodes IMAGE as BMP and writes to PATHNAME.

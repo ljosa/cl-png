@@ -3,7 +3,7 @@
 ;;;   operations efficient is a pain.  Should see if I can just pass
 ;;;   the 3-D array to the C functions.
 
-(in-package #:png)
+(in-package #:image)
 
 
 (defun image-displaced-to-buffer-p (image)
@@ -93,7 +93,6 @@ height, width, number of channels, and bit depth as IMAGE."
     (dotimes (i (array-total-size image) new)
       (setf (row-major-aref new i) (row-major-aref image i)))))
 
-#+ignore
 (defun 8-bit-image (image)
   "If IMAGE is an 8-BIT-IMAGE, return it or a copy of it.  If IMAGE is
 a 16-BIT-IMAGE, return an 8-BIT-IMAGE that has the same width, height,
@@ -104,17 +103,11 @@ dynamic range of the image so as to fit within the smaller bit depth."
   (etypecase image
     (8-bit-image image)
     (16-bit-image 
-     (let* ((new (make-image (image-height image) (image-width image)
-			     (image-channels image) 8))
-	    (v16 (array-displacement image))
-	    (v8 (array-displacement new)))
-       (declare (type (simple-array (unsigned-byte 8) 1) v8)
-		(type (simple-array (unsigned-byte 16) 1) v16))
-       (dotimes (i (array-total-size v16) new)
-	 ;; TODO: Bitfidling may be faster.
-	 (setf (aref v8 i) (round (aref v16 i) 257)))))))
+     (let ((new (make-image (image-height image) (image-width image)
+			    (image-channels image) 8)))
+       (dotimes (i (array-total-size image) new)
+	 (setf (row-major-aref new i) (round (row-major-aref image i) 257)))))))
 
-#+ignore    
 (defun 16-bit-image (image)
   "If IMAGE is a 16-BIT-IMAGE, return it or a copy of it.  If IMAGE is
 an 8-BIT-IMAGE, return a 16-BIT-IMAGE that has the same width, height,
@@ -125,11 +118,7 @@ the increased bit depth."
   (etypecase image
     (16-bit-image image)
     (8-bit-image 
-     (let* ((new (make-image (image-height image) (image-width image)
-			     (image-channels image) 16))
-	    (v8 (array-displacement image))
-	    (v16 (array-displacement new)))
-       (declare (type (simple-array (unsigned-byte 8) 1) v8)
-		(type (simple-array (unsigned-byte 16) 1) v16))
-       (dotimes (i (length v8) new)
-	 (setf (aref v16 i) (* 257 (aref v8 i))))))))
+     (let ((new (make-image (image-height image) (image-width image)
+			    (image-channels image) 16)))
+       (dotimes (i (array-total-size image) new)
+	 (setf (row-major-aref new i) (* 257 (row-major-aref image i))))))))

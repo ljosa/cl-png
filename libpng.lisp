@@ -156,7 +156,7 @@
     (let ((new-length (length *buffer*)))
       (loop while (< new-length needed)
 	 do (setf new-length (* 2 new-length)))
-      (setf *buffer* (make-shareable-byte-vector new-length)))))
+      (setf *buffer* (image::make-shareable-byte-vector new-length)))))
 
 (defcallback user-read-data :void ((png-ptr :pointer) (data :pointer)
 				   (length png-size))
@@ -201,7 +201,7 @@
 			  (:output 'png-create-write-struct))
 		   +png-libpng-ver-string+ (null-pointer)
 		   (callback error-fn) (callback warn-fn)))
-	   (*buffer* (make-shareable-byte-vector 1024)))
+	   (*buffer* (image::make-shareable-byte-vector 1024)))
        (when (null-pointer-p ,var)
 	 (error "Failed to allocate PNG write struct."))
        (unwind-protect (progn ,@body)
@@ -245,7 +245,7 @@
 	(raw-data (gensym "RAW-DATA"))
 	(i (gensym "I"))
 	(buffer (gensym "BUFFER")))
-    `(let ((,row-pointers (cffi-sys:make-shareable-byte-vector
+    `(let ((,row-pointers (image::make-shareable-byte-vector
 			   (* (image-height ,image)
 			      (foreign-type-size :pointer))))
 	   (,buffer (array-displacement ,image)))
