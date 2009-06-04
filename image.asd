@@ -8,6 +8,7 @@
 			 (pushnew :image *features*))
   :components ((:file "compat")
 	       (:file "image" :depends-on ("compat"))
+	       (:file "bmp" :depends-on ("image"))
 	       (:file "pnm" :depends-on ("image"))))
 
 (defpackage #:image
@@ -19,7 +20,7 @@
    #:16-bit-image
    #:grayscale-image
    #:rgb-image
-   #:argb-image
+   #:rgba-image
    #:make-image
    #:copy-image
    #:image-height

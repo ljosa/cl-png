@@ -16,7 +16,6 @@
   :perform (asdf:load-op :after (op png)
 			 (pushnew :png *features*))
   :components ((:file "libpng" :depends-on ("grovel"))
-	       (:file "bmp" :depends-on ("libpng"))
 	       (cffi-grovel:grovel-file "grovel"))
   :depends-on (#:cffi #:image))
 

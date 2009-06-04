@@ -48,7 +48,7 @@ pixel in the i-th row and j-th column of image."
   "An IMAGE with three channels."
   `(image ,height ,width 3))
 
-(deftype argb-image (&optional height width)
+(deftype rgba-image (&optional height width)
   "An IMAGE with four channels."
   `(image ,height ,width 4))
 

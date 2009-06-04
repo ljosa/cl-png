@@ -1,4 +1,8 @@
-(in-package #:image)
+(defpackage #:bmp
+  (:use #:common-lisp #:image)
+  (:export #:decode #:encode))
+
+(in-package #:bmp)
 
 (defun read-u2le (in)
   "Reads 2 unsigned BYTES in little-endian from IN stream without
@@ -42,7 +46,7 @@ testing for end of file."
              (format stream "Unhandled BMP bitcount ~a~%"
                      (unhandled-bitcount-bitcount condition)))))
 
-(defun decode-bmp (input &key bgr flip strip-alpha)
+(defun decode (input &key bgr flip strip-alpha)
   "Reads an image in BMP format from input and returns an array of
 type IMAGE.  The bit depth of the returned IMAGE will be either 8 or
 16.
@@ -141,14 +145,14 @@ Signals an error if reading the image fails."
       image)))
 
 
-(defun decode-bmp-file (pathname &key flip bgr)
+(defun decode-file (pathname &key flip bgr)
   "Reads file PATHNAME, decodes as BMP file and returns IMAGE."
   (with-open-file (input pathname :element-type '(unsigned-byte 8))
-    (decode-bmp input :flip flip :bgr bgr)))
+    (decode input :flip flip :bgr bgr)))
 
 
-(defun encode-bmp (image output &key flip (xppi 72) (yppi 72)
-                   xppm yppm (reserve 0) strip-alpha bgr)
+(defun encode (image output &key flip (xppi 72) (yppi 72)
+	       xppm yppm (reserve 0) strip-alpha bgr)
   "Writes IMAGE in BMP format to OUTPUT.
 
 Flips image vertically if FLIP set.  XPPI and YPPI specify pixels per
@@ -241,10 +245,10 @@ Signals an error if writing the image fails."
         (dotimes (c npad)
           (write-byte 0 output))))))
 
-(defun encode-bmp-file (image pathname &key flip strip-alpha bgr)
+(defun encode-file (image pathname &key flip strip-alpha bgr)
   "Encodes IMAGE as BMP and writes to PATHNAME."
   (with-open-file (output pathname :element-type '(unsigned-byte 8)
 			  :direction :output :if-exists :supersede)
-    (encode-bmp image output :flip flip :strip-alpha strip-alpha :bgr bgr)))
+    (encode image output :flip flip :strip-alpha strip-alpha :bgr bgr)))
 
 

@@ -17,10 +17,10 @@
 ;;; *BMPIMAGES-PATHNAME* below.
 ;;;
 (defpackage #:bmp-test
-  (:use #:common-lisp #:lisp-unit #:png)
+  (:use #:common-lisp #:lisp-unit #:image)
   (:export #:*images-pathname*))
+
 (in-package #:bmp-test)
-(use-package :png)
 
 (defparameter *images-pathname*
   #+asdf (merge-pathnames "images/" 
@@ -35,19 +35,19 @@
 (defun decode-pngimage (basename)
   (let ((pathname (make-name basename "png")))
     (with-open-file (input pathname :element-type '(unsigned-byte 8))
-      (decode input))))
+      (png:decode input))))
 
 (defun decode-bmpimage (basename &key strip-alpha)
   (let ((pathname (make-name basename "bmp")))
     (with-open-file (input pathname :element-type '(unsigned-byte 8))
-      (decode-bmp input :strip-alpha strip-alpha))))
+      (bmp:decode input :strip-alpha strip-alpha))))
 
 (defun encode-decode (im &key strip-alpha keep-tmp)
   (let ((pathname (make-name "tmp" "bmp")))
     (ignore-errors (delete-file pathname))
-    (encode-bmp-file im pathname :strip-alpha strip-alpha)
+    (bmp::encode-file im pathname :strip-alpha strip-alpha)
     (prog1
-        (decode-bmp-file pathname)
+        (bmp::decode-file pathname)
       (unless keep-tmp
         (delete-file pathname)))))
 
@@ -74,7 +74,7 @@
     (assert-true (typep a 'rgb-image))
     (assert-equal 0 (max-diff a (encode-decode a)))
     (assert-true (typep b 'grayscale-image))
-    (assert-error 'png::unhandled-bitcount (encode-decode b))))
+    (assert-error 'bmp::unhandled-bitcount (encode-decode b))))
 ;;; Note: haven't implemented encoder for grayscale-image yet
 
 (define-test encode-modulo-2
@@ -87,7 +87,7 @@
     (assert-true (typep a 'rgb-image))
     (assert-equal 0 (max-diff a (encode-decode a)))
     (assert-true (typep b 'grayscale-image))
-    (assert-error 'png::unhandled-bitcount (encode-decode b))))
+    (assert-error 'bmp::unhandled-bitcount (encode-decode b))))
 ;;; Note: haven't implemented encoder for grayscale-image yet
 
 
@@ -125,19 +125,19 @@
 ;;; as they are not supported.  
 
 (define-test encode-xrgb
-  (assert-error 'png::unhandled-compression (decode-bmpimage "intrepid-xrgb")))
+  (assert-error 'bmp::unhandled-compression (decode-bmpimage "intrepid-xrgb")))
 
 ;;; This one uses Compression=3, bitcount=16
 (define-test encode-r5b6g5
-  (assert-error 'png::unhandled-compression (decode-bmpimage "intrepid-r5b6g5")))
+  (assert-error 'bmp::unhandled-compression (decode-bmpimage "intrepid-r5b6g5")))
 
 ;;; This one uses Compression=3, bitcount=16
 (define-test encode-a1r5b5g5
-  (assert-error 'png::unhandled-compression (decode-bmpimage "intrepid-a1r5b5g5")))
+  (assert-error 'bmp::unhandled-compression (decode-bmpimage "intrepid-a1r5b5g5")))
 
 ;;; This one uses Compression=0, bitcount=16
 (define-test encode-x1r5b5g5
-  (assert-error 'png::unhandled-bitcount (decode-bmpimage "intrepid-x1r5b5g5")))
+  (assert-error 'bmp::unhandled-bitcount (decode-bmpimage "intrepid-x1r5b5g5")))
 
 (run-tests encode-xrgb)
 (run-tests encode-r5b6g5)
