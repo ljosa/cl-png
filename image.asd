@@ -8,6 +8,7 @@
 			 (pushnew :image *features*))
   :components ((:file "image-package")
 	       (:file "image" :depends-on ("image-package"))
+	       (:file "ops" :depends-on ("image"))
 	       (:file "bmp" :depends-on ("image"))
 	       (:file "pnm" :depends-on ("image"))))
 
