@@ -88,7 +88,8 @@ possibly arrays of type simple-array (unsigned-byte 8) (*)."
 (defmacro with-pointer-to-array-data ((ptr-var array) &body body)
   (let ((v (gensym)))
     `(let ((,v (ccl::array-data-and-offset ,array)))
-       ;;(unless (typep ,v 'ivector) (report-bad-arg ,v 'ivector))
+       (unless (typep ,v 'ccl::ivector) 
+	 (ccl::report-bad-arg ,v 'ccl::ivector))
        (ccl::without-gcing
          (ccl:with-macptrs ((,ptr-var))
            (ccl::%vect-data-to-macptr ,v ,ptr-var)
