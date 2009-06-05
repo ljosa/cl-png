@@ -156,7 +156,7 @@
     (let ((new-length (length *buffer*)))
       (loop while (< new-length needed)
 	 do (setf new-length (* 2 new-length)))
-      (setf *buffer* (image::make-shareable-byte-vector new-length)))))
+      (setf *buffer* (make-shareable-byte-vector new-length)))))
 
 (defcallback user-read-data :void ((png-ptr :pointer) (data :pointer)
 				   (length png-size))
@@ -201,7 +201,7 @@
 			  (:output 'png-create-write-struct))
 		   +png-libpng-ver-string+ (null-pointer)
 		   (callback error-fn) (callback warn-fn)))
-	   (*buffer* (image::make-shareable-byte-vector 1024)))
+	   (*buffer* (make-shareable-byte-vector 1024)))
        (when (null-pointer-p ,var)
 	 (error "Failed to allocate PNG write struct."))
        (unwind-protect (progn ,@body)
@@ -243,14 +243,12 @@
 			     &body body)
   (let ((row-pointers (gensym "ROW-POINTERS"))
 	(raw-data (gensym "RAW-DATA"))
-	(i (gensym "I"))
-	(buffer (gensym "BUFFER")))
-    `(let ((,row-pointers (image::make-shareable-byte-vector
+	(i (gensym "I")))
+    `(let ((,row-pointers (make-shareable-byte-vector
 			   (* (image-height ,image)
-			      (foreign-type-size :pointer))))
-	   (,buffer (array-displacement ,image)))
+			      (foreign-type-size :pointer)))))
        (with-pointer-to-vector-data (,rows-ptr ,row-pointers)
-	 (with-pointer-to-vector-data (,raw-data ,buffer)
+	 (with-pointer-to-array-data (,raw-data ,image)
 	   (dotimes (,i (image-height ,image))
 	     (setf (mem-aref ,rows-ptr :pointer ,i) 
 		   (inc-pointer ,raw-data (* ,i (image-width ,image)
@@ -302,13 +300,13 @@ Signals an error if reading the image fails."
 	      (png-set-strip-alpha png-ptr))
         (when swapBGR
           (png-set-bgr png-ptr))
-	    (let ((image (make-image height width
-				     (if (grayp color-type) 1 3)
-				     (if (= 16 bit-depth) 16 8))))
-	      (with-row-pointers (row-pointers image)
-		(png-set-rows png-ptr info-ptr row-pointers)
-		(png-read-image png-ptr row-pointers))
-	      image)))))))
+	(let ((image (make-image height width
+				 (if (grayp color-type) 1 3)
+				 (if (= 16 bit-depth) 16 8))))
+	  (with-row-pointers (row-pointers image)
+	    (png-set-rows png-ptr info-ptr row-pointers)
+	    (png-read-image png-ptr row-pointers))
+	  image)))))))
 
 (defun decode-file (pathname &key swapbgr)
   (with-open-file (input pathname :element-type '(unsigned-byte 8))

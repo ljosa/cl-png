@@ -15,34 +15,11 @@
   :description "Read and write PNG (Portable Network Graphics) files."
   :perform (asdf:load-op :after (op png)
 			 (pushnew :png *features*))
-  :components ((:file "libpng" :depends-on ("grovel"))
+  :components ((:file "png-package")
+	       (:file "compat" :depends-on ("png-package"))
+	       (:file "libpng" :depends-on ("grovel" "compat" "png-package"))
 	       (cffi-grovel:grovel-file "grovel"))
   :depends-on (#:cffi #:image))
 
-(defpackage #:png
-  (:documentation "Read and write PNG (Portable Network Graphics) files.")
-  (:use #:common-lisp #:cffi #:image)
-  (:shadow #:make-shareable-byte-vector
-	   #+(or allegro clisp) #:with-pointer-to-vector-data)
-  (:export
-   #:image
-   #:8-bit-image
-   #:16-bit-image
-   #:grayscale-image
-   #:rgb-image
-   #:argb-image
-   #:make-image
-   #:copy-image
-   #:image-height
-   #:image-width
-   #:image-channels
-   #:image-bit-depth
-   #:decode
-   #:decode-file
-   #:encode
-   #:encode-file
-   #:decode-bmp
-   #:decode-bmp-file
-   ))
 
 

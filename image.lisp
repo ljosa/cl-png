@@ -4,27 +4,14 @@
 ;;;   the 3-D array to the C functions.
 
 (in-package #:image)
-
-
-(defun image-displaced-to-buffer-p (image)
-  (multiple-value-bind (displacement index) (array-displacement image)
-    (and displacement
-        (zerop index)
-        (typep (array-displacement image) 
-               (list #+allegro 'array
-                     #-allegro 'simple-array
-                     (array-element-type image)
-                     (list (reduce #'* (array-dimensions image))))))))
   
 (deftype 8-bit-image (&optional height width channels)
   "An IMAGE with element type (UNSIGNED-BYTE 8)."
-  `(and (array (unsigned-byte 8) (,height ,width ,channels))
-        (satisfies image-displaced-to-buffer-p)))
+  `(and (simple-array (unsigned-byte 8) (,height ,width ,channels))))
 
 (deftype 16-bit-image (&optional height width channels)
   "An IMAGE with element type (UNSIGNED-BYTE 16)."
-  `(and (array (unsigned-byte 16) (,height ,width ,channels))
-	(satisfies image-displaced-to-buffer-p)))
+  `(and (simple-array (unsigned-byte 16) (,height ,width ,channels))))
 
 (deftype image (&optional height width channels)
   "A three-dimensional array of (unsigned-byte 8) or (unsigned-byte
@@ -52,18 +39,26 @@ pixel in the i-th row and j-th column of image."
   "An IMAGE with four channels."
   `(image ,height ,width 4))
 
+(defun make-shareable-array (&rest args)
+  #+(or lispworks3 lispworks4 lispworks5.0)
+  (sys:in-static-area
+    (apply #'make-array args))
+  #-(or lispworks3 lispworks4 lispworks5.0)
+  (apply #'make-array 
+	 #+(or lispworks allegro) :allocation
+	 #+lispworks :static #+allegro :static-reclaimable
+	 args))
+
 (defun make-image (height width channels &optional bit-depth)
   "Make a new IMAGE of the specified height, width, and number of
 channels.  The image will be an 8-bit-image or a 16-bit-image depending
 on the value of byte-size.  Makes an 8-BIT-IMAGE if BIT-DEPTH is 8 or
 NIL and a 16-BIT-IMAGE if BIT-DEPTH is 16.  The contents of the image
 are undefined."
-  (make-array (list height width channels) 
-	      :element-type (ecase bit-depth
-			      ((8 nil) '(unsigned-byte 8))
-			      (16 '(unsigned-byte 16)))
-	      :displaced-to (make-shareable-byte-vector
-			     (* height width channels) (or bit-depth 8))))
+  (make-shareable-array (list height width channels) 
+			:element-type (ecase bit-depth
+					((8 nil) '(unsigned-byte 8))
+					(16 '(unsigned-byte 16)))))
 
 (defun image-height (image) 
   "The height of image, i.e., the number of rows."

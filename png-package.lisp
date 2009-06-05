@@ -1,10 +1,8 @@
-;;;; -*- Mode: Lisp;  -*-
+(in-package #:cl-user)
 
 (defpackage #:png
   (:documentation "Read and write PNG (Portable Network Graphics) files.")
-  (:use #:common-lisp #:cffi)
-  (:shadow #:make-shareable-byte-vector
-	   #+(or allegro clisp) #:with-pointer-to-vector-data)
+  (:use #:common-lisp #:cffi #:image)
   (:export
    #:image
    #:8-bit-image
@@ -25,5 +23,3 @@
    #:decode-bmp
    #:decode-bmp-file
    ))
-
-

@@ -1,22 +1,9 @@
-(in-package #:image)
-
-#+lispworks
-(defun make-shareable-byte-vector (size &optional (byte-size 8))
-  (sys:in-static-area
-   (make-array size :element-type (list 'unsigned-byte byte-size))))
-
-#+allegro
-(defun make-shareable-byte-vector (size &optional (byte-size 8))
-  (make-array size :element-type (list 'unsigned-byte byte-size)
-	      :allocation :static-reclaimable))
-
-#-(or lispworks allegro)
-(defun make-shareable-byte-vector (size &optional (byte-size 8))
-   (make-array size :element-type (list 'unsigned-byte byte-size)))
+(in-package #:png)
 
 #+sbcl ; Present in SBCL 1.0.24.
 (declaim (ftype (function (array) (values (simple-array * (*)) &optional))
                 array-storage-vector))
+
 #+sbcl
 (defun array-storage-vector (array)
   "Returns the underlying storage vector of ARRAY, which must be a non-displaced array.
@@ -29,8 +16,8 @@ ARRAY, which this function returns.
 Important note: the underlying vector is an implementation detail. Even though
 this function exposes it, changes in the implementation may cause this
 function to be removed without further warning."
-  ;; KLUDGE: Without TRULY-THE the system is not smart enough to figure out that
-  ;; the return value is always of the known type.
+  ;; KLUDGE: Without TRULY-THE the system is not smart enough to
+  ;; figure out that the return value is always of the known type.
   (sb-ext:truly-the (simple-array * (*))
              (if (sb-kernel:array-header-p array)
                  (if (sb-kernel:%array-displaced-p array)
@@ -40,74 +27,71 @@ function to be removed without further warning."
                  array)))
 
 #+allegro
-(defmacro with-pointer-to-vector-data ((ptr-var vector) &body body)
+(defmacro with-pointer-to-array-data ((ptr-var array) &body body)
   "Bind PTR-VAR to a foreign pointer to the data in VECTOR. Not safe
-except with vectors allocated by MAKE-SHAREABLE-BYTE-VECTOR and
+except with array allocated by MAKE-SHAREABLE-ARRAY and
 possibly arrays of type simple-array (unsigned-byte 8) (*)."
 ;;; An array allocated in static-reclamable is a non-simple array in
 ;;; the normal Lisp allocation area, pointing to a simple array in the
 ;;; static-reclaimable allocation area. Therefore we have to get out
 ;;; the simple-array to find the pointer to the actual contents.
-  (let ((simple-vec (gensym "SIMPLE-VEC")))
-    `(excl:with-underlying-simple-vector (,vector ,simple-vec)
+  (let ((simple-arr (gensym "SIMPLE-ARR")))
+    `(excl:with-underlying-simple-vector (,array ,simple-arr)
        (let ((,ptr-var (ff:fslot-address-typed :unsigned-char 
-					       :lisp ,simple-vec)))
+					       :lisp ,simple-arr)))
 	 ,@body))))
 
 #+clisp
-(defmacro with-pointer-to-vector-data ((ptr-var vector) &body body)
-  "Bind PTR-VAR to a foreign pointer to the data in VECTOR."
-  (let ((vector-var (gensym))
+(defmacro with-pointer-to-array-data ((ptr-var array) &body body)
+  "Bind PTR-VAR to a foreign pointer to the data in ARRAY."
+  (let ((array-var (gensym))
 	(type (gensym))
 	(nbytes (gensym))
 	(bytes-per-word (gensym)))
-    `(let* ((,vector-var ,vector)
+    `(let* ((,array-var ,vector)
 	    ,type ,bytes-per-word)
-       (etypecase ,vector-var
-	 ((simple-array (unsigned-byte 8) (*)) (setq ,type :unsigned-char
+       (etypecase ,array-var
+	 ((simple-array (unsigned-byte 8)) (setq ,type :unsigned-char
 						     ,bytes-per-word 1))
-	 ((simple-array (unsigned-byte 16) (*)) (setq ,type :unsigned-short
+	 ((simple-array (unsigned-byte 16)) (setq ,type :unsigned-short
 						      ,bytes-per-word 2)))
-       (with-foreign-pointer (,ptr-var (* (length ,vector-var) ,bytes-per-word)
+       (with-foreign-pointer (,ptr-var (* (array-total-size ,array-var)
+					  ,bytes-per-word)
 				       ,nbytes)
          ;; copy-in
          (loop
 	    for word from 0 
 	    and byte below ,nbytes by ,bytes-per-word 
-	    do (cffi-sys:%mem-set (aref ,vector-var word) ,ptr-var ,type byte))
+	    do (cffi-sys:%mem-set (row-major-aref ,array-var word)
+				  ,ptr-var ,type byte))
          (unwind-protect (progn ,@body)
            ;; copy-out
            (loop 
 	      for word from 0
 	      and byte below ,nbytes by ,bytes-per-word
-	      do (setf (aref ,vector-var word)
+	      do (setf (row-major-aref ,array-var word)
 		       (cffi-sys:%mem-ref ,ptr-var ,type byte))))))))
 
-#+clisp
-(defmacro with-pointer-to-vector-data ((ptr-var vector) &body body)
-  "Bind PTR-VAR to a foreign pointer to the data in VECTOR."
-  (let ((vector-var (gensym))
-	(type (gensym))
-	(nbytes (gensym))
-	(bytes-per-word (gensym)))
-    `(let* ((,vector-var ,vector)
-	    ,type ,bytes-per-word)
-       (etypecase ,vector-var
-	 ((simple-array (unsigned-byte 8) (*)) (setq ,type :unsigned-char
-						     ,bytes-per-word 1))
-	 ((simple-array (unsigned-byte 16) (*)) (setq ,type :unsigned-short
-						      ,bytes-per-word 2)))
-       (with-foreign-pointer (,ptr-var (* (length ,vector-var) ,bytes-per-word)
-				       ,nbytes)
-         ;; copy-in
-         (loop
-	    for word from 0 
-	    and byte below ,nbytes by ,bytes-per-word 
-	    do (cffi-sys:%mem-set (aref ,vector-var word) ,ptr-var ,type byte))
-         (unwind-protect (progn ,@body)
-           ;; copy-out
-           (loop 
-	      for word from 0
-	      and byte below ,nbytes by ,bytes-per-word
-	      do (setf (aref ,vector-var word)
-		       (cffi-sys:%mem-ref ,ptr-var ,type byte))))))))
+#+lispworks
+(defmacro with-pointer-to-array-data ((ptr-var array) &body body)
+  `(progn
+     (assert (system:staticp ,array) `(,array)
+	     "Array must be allocated in the static area.")
+     (with-pointer-to-vector-data (,ptr-var ,array) ,@body)))
+
+#+sbcl
+(defmacro with-pointer-to-array-data ((ptr-var array) &body body)
+  `(cffi:with-pointer-to-vector-data (,ptr-var (array-storage-vector ,array))
+     ,@body))
+
+#+ccl
+(defmacro with-pointer-to-array-data ((ptr-var array) &body body)
+  (let ((v (gensym)))
+    `(let ((,v (ccl::array-data-and-offset ,array)))
+       ;;(unless (typep ,v 'ivector) (report-bad-arg ,v 'ivector))
+       (ccl::without-gcing
+         (ccl:with-macptrs ((,ptr-var))
+           (ccl::%vect-data-to-macptr ,v ,ptr-var)
+           ,@body)))))
+
+
