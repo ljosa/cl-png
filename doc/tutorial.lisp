@@ -6,19 +6,19 @@
 ;;;# IMAGE arrays
 ;;;
 ;;; An image is a 3-dimensional array of row, column, and channel
-;;; representing pixels.
+;;; representing pixels. 
 ;;;
 ;;; The BIT-DEPTH is the size of unsigned-byte used representing the
 ;;; array. Currently, this is restricted to 8 or 16.
 ;;;
-;;;## Image type
+;;;## Image types
 ;;;
 ;;; The following image types are defined: 8-BIT-IMAGE, 16-BIT-IMAGE,
 ;;; GRAY-SCALE-IMAGE, RGB-IMAGE, ARGB-IMAGE. 
 ;;;
 ;;; Note that the Lisp TYPE-OF function returns the size as well as
 ;;; the element type for an array. This means that if you compare
-;;; types you are also comparing sizes.
+;;; types you are also comparing image sizes.
 
 (let ((a (make-image 200 300 3 8))
       (b (make-image 200 300 3 16))

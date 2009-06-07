@@ -126,7 +126,7 @@ Signals an error if reading the image fails."
       ;; Read palette if there is one
       (when (> raster-data-offset current-offset)
         (let ((table-size (- raster-data-offset current-offset)))
-          ;; (format t "   table-size: ~d~%" table-size)
+          (format t "   table-size: ~d~%" table-size)
           (dotimes (r table-size)
             (read-byte input))))
 
@@ -148,7 +148,7 @@ Signals an error if reading the image fails."
 (defun decode-file (pathname &key flip bgr)
   "Reads file PATHNAME, decodes as BMP file and returns IMAGE."
   (with-open-file (input pathname :element-type '(unsigned-byte 8))
-    (decode input :flip flip :bgr bgr)))
+    (bmp:decode input :flip flip :bgr bgr)))
 
 
 (defun encode (image output &key flip (xppi 72) (yppi 72)
@@ -179,7 +179,7 @@ Signals an error if writing the image fails."
   ;;  colors_important is generally ignored
   ;;  
   (check-type image (or rgb-image rgba-image grayscale-image))
-  (let ((raster-data-offset 54)
+  (let ((raster-data-offset (if (/= 1 (image-channels image)) 54 (+ 54 1024)))
         (sz                 40)
         (planes             1)
         (compression        0)
@@ -230,9 +230,13 @@ Signals an error if writing the image fails."
       (write-u4le output colors-used)
       (write-u4le output colors-important)
       ;; Write color table if required
-      (unless (member bitcount '(24 32))
-        ;; (except we are't doing that)
-        (error 'unhandled-bitcount :bitcount bitcount))
+      (cond ((member bitcount '(8)) ; bogus color table for grayscale images
+             (dotimes (n 256)
+               (dotimes (c 3)
+                 (write-byte n output))
+               (write-byte 0 output)))
+            ((member bitcount '(24 32))) ; don't need one
+            (t (error 'unhandled-bitcount :bitcount bitcount)))
       ;; Write raster data
       (dotimes (row (image-height image))
         (dotimes (col (image-width image))
@@ -249,6 +253,6 @@ Signals an error if writing the image fails."
   "Encodes IMAGE as BMP and writes to PATHNAME."
   (with-open-file (output pathname :element-type '(unsigned-byte 8)
 			  :direction :output :if-exists :supersede)
-    (encode image output :flip flip :strip-alpha strip-alpha :bgr bgr)))
+    (bmp:encode image output :flip flip :strip-alpha strip-alpha :bgr bgr)))
 
 

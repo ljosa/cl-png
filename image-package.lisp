@@ -4,6 +4,7 @@
   (:documentation "Image representation and manipulation.")
   (:use #:common-lisp)
   (:export
+   ;; image.lisp
    #:image
    #:8-bit-image
    #:16-bit-image
@@ -16,7 +17,23 @@
    #:image-width
    #:image-channels
    #:image-bit-depth
-
-   #:make-image-like #:image-fill #:image-channel-max #:image-max #:image-norm2
-   #:rotate #:image-sub #:image-nsub #:image-add #:image-nadd
+   ;; ops.lisp
+   #:mismatched-image-types
+   #:mismatched-image-sizes
+   #:mismatched-image-dims
+   #:make-image-like
+   #:size
+   #:dims
+   #:fillv
+   #:channel-min
+   #:channel-max
+   #:intensity-max
+   #:norm2
+   #:rotate
+   #:flip
+   #:mirror
+   #:add
+   #:add*
+   #:subtract
+   #:subtract*
    ))

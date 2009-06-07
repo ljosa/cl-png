@@ -52,11 +52,27 @@
         (delete-file pathname)))))
 
 (defun max-diff (im1 im2)
-  (image-max (image-sub im1 im2)))
+  (image:intensity-max (image:sub im1 im2)))
 
 
-;;;# Tests
+;;;# Basic Tests
 ;;;
+;;; Tests that decode function produces correct type of image and
+;;; fails on those whose modes aren't supported.
+(define-test image-type-test
+  (let ((rgb  (decode-bmpimage "tagged-RGB"))
+        (argb (decode-bmpimage "tagged-ARGB"))
+        (gray (decode-bmpimage "tagged-gray")))
+    (assert-true (typep rgb  'rgb-image))
+    (assert-true (typep argb 'rgba-image))
+    (assert-true (typep gray 'grayscale-image))
+    (assert-error 'bmp::unhandled-compression (decode-bmpimage "intrepid-xrgb"))
+    (assert-error 'bmp::unhandled-compression (decode-bmpimage "intrepid-r5b6g5"))
+    (assert-error 'bmp::unhandled-compression (decode-bmpimage "intrepid-a1r5b5g5"))
+    (assert-error 'bmp::unhandled-bitcount    (decode-bmpimage "intrepid-x1r5b5g5"))))
+
+(run-tests image-type-test)
+
 ;;; Test that the row padding is being handled properly.  There are
 ;;; four cases: images whose widths modulo 4 result in 0,1,2,3. 
 ;;; 
@@ -79,7 +95,7 @@
 
 (define-test encode-modulo-2
   (let ((a (decode-bmpimage "scene-w766")))
-    (assert-equal 0  (image-max (image-sub a (encode-decode a))))))
+    (assert-equal 0  (image:intensity-max (image:sub a (encode-decode a))))))
 
 (define-test encode-modulo-3
   (let ((a (decode-bmpimage "scene-w767"))
@@ -93,7 +109,7 @@
 
 (run-tests encode-modulo-0 encode-modulo-2)
 (run-tests encode-modulo-1 encode-modulo-3)
-
+;; (run-tests)
 
 
 (define-test decode-strip-alpha
@@ -117,31 +133,5 @@
 (run-tests decode-strip-alpha)
 (run-tests encode-strip-alpha)
 
-
-
-;;;# Tests for other compression modes
-;;;
-;;; Currently, all of these files should signal errors in the decoder,
-;;; as they are not supported.  
-
-(define-test encode-xrgb
-  (assert-error 'bmp::unhandled-compression (decode-bmpimage "intrepid-xrgb")))
-
-;;; This one uses Compression=3, bitcount=16
-(define-test encode-r5b6g5
-  (assert-error 'bmp::unhandled-compression (decode-bmpimage "intrepid-r5b6g5")))
-
-;;; This one uses Compression=3, bitcount=16
-(define-test encode-a1r5b5g5
-  (assert-error 'bmp::unhandled-compression (decode-bmpimage "intrepid-a1r5b5g5")))
-
-;;; This one uses Compression=0, bitcount=16
-(define-test encode-x1r5b5g5
-  (assert-error 'bmp::unhandled-bitcount (decode-bmpimage "intrepid-x1r5b5g5")))
-
-(run-tests encode-xrgb)
-(run-tests encode-r5b6g5)
-(run-tests encode-a1r5b5g5)
-(run-tests encode-x1r5b5g5)
 
 

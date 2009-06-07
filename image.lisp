@@ -56,9 +56,9 @@ on the value of byte-size.  Makes an 8-BIT-IMAGE if BIT-DEPTH is 8 or
 NIL and a 16-BIT-IMAGE if BIT-DEPTH is 16.  The contents of the image
 are undefined."
   (make-shareable-array (list height width channels) 
-			:element-type (ecase bit-depth
-					((8 nil) '(unsigned-byte 8))
-					(16 '(unsigned-byte 16)))))
+                        :element-type (ecase bit-depth
+                                        ((8 nil) '(unsigned-byte 8))
+                                        (16 '(unsigned-byte 16)))))
 
 (defun image-height (image) 
   "The height of image, i.e., the number of rows."
