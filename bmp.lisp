@@ -126,7 +126,7 @@ Signals an error if reading the image fails."
       ;; Read palette if there is one
       (when (> raster-data-offset current-offset)
         (let ((table-size (- raster-data-offset current-offset)))
-          (format t "   table-size: ~d~%" table-size)
+          ;; (format t "   table-size: ~d~%" table-size)
           (dotimes (r table-size)
             (read-byte input))))
 
@@ -210,7 +210,8 @@ Signals an error if writing the image fails."
         (setf (aref bgridx 0) 2)
         (setf (aref bgridx 2) 0))
       ;; Fix npad 
-      ;; (when (< 0 npad) (setf npad (- 4 npad)))
+      (when (and (= channels 1) (< 0 npad))
+        (setf npad (- 4 npad)))
       ;; Write "BM" signature
       (write-u2le output 19778)
       ;; Write primary header

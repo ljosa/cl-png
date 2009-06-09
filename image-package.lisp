@@ -36,4 +36,11 @@
    #:add*
    #:subtract
    #:subtract*
+   #:threshold-filter
+   #:binary-morphological-filter
+   #:erosion-filter
+   #:dilation-filter
+   #:majority-filter
+   #:open-filter
+   #:close-filter
    ))

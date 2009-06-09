@@ -37,7 +37,7 @@
       (bmp:decode input :strip-alpha strip-alpha))))
 
 (defun max-diff (im1 im2)
-  (image:intensity-max (image:sub im1 im2)))
+  (image:intensity-max (image:subtract im1 im2)))
 
 (defun list2array (lst)
   (make-array (length lst) :initial-contents lst))

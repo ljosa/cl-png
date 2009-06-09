@@ -23,7 +23,7 @@
 ;;; Convenience functions
 
 (defun make-image-like (im)
-  "Makes an image the same size and bitdepth as IM."
+  "Makes an image the same size and bit-depth as IM."
   (destructuring-bind (nm tp (h w c)) (type-of im)
     (declare (ignorable nm))
 	(make-image h w c (second tp))))
@@ -138,7 +138,7 @@ image"
 
 ;;; Image-valued operations on multiple images
 
-(defun sub (im1 im2)
+(defun subtract (im1 im2)
   "Subtracts image IM2 from image IM1 and returns the resulting image
 difference without modifying either IM1 or IM2. Both images must be
 the same type and size.
@@ -155,7 +155,7 @@ Clips pixel intensity to 0 when necessary. "
                         (-  (aref im1 i j k) (aref im2 i j k))
                         0)))))))
 
-(defun sub* (im1 im2)
+(defun subtract* (im1 im2)
   "Destructively subtracts image IM2 from image IM1, leaving the
 resulting image difference in im1. Both images must be the same type
 and size.
@@ -202,4 +202,181 @@ Clips to maximum intensity in each channel if exceeded"
           (if (< (aref im1 i j k) (- lim (aref im2 i j k)))
               (incf (aref im1 i j k) (aref im2 i j k))
               (setf (aref im1 i j k) lim)))))))
+
+
+(defun threshold-filter (image threshold)
+  "Returns a GRAYSCALE-IMAGE the same dimensions as IMAGE whose
+  corresponding elements are white if they exceed a threshold, or
+  black if they do not. "
+  (let* ((img (grayscale-image image))
+         (new (image::make-image-like img))
+         (maxval (if (= 8 (image-bit-depth img)) #xff #xffff)))
+    (dotimes (i (array-total-size img) new)
+      (setf (row-major-aref new i) (if (< (row-major-aref img i) threshold)
+                                       0 maxval)))))
+
+(defun generate-mask (name 1side)
+  "Generates a binary mask matrix of '(UNSIGNED-BYTE 8) elements whose
+sides are both (2*1SIDE+1) pixels. Valid mask shapes are specified by
+NAME, currently :square and :cross. An invalid name will signal an
+error.
+"
+  (let* ((width (1+ (* 2 1side)))
+         (mask (make-array (list width width)
+                           :element-type '(unsigned-byte 8)
+                           :initial-element 1)))
+    (ecase name
+      (:square mask)
+      (:cross
+       (multiple-value-bind (d r) (floor width 3)
+         (declare (ignorable r))
+         ;; Notch out the corners
+         (dotimes (r d mask)
+           (dotimes (w d)
+             (setf (aref mask r w) 0)
+             (setf (aref mask r (- width w 1)) 0)
+             (setf (aref mask (- width r 1) w) 0)
+             (setf (aref mask (- width r 1) (- width w 1)) 0))))))))
+
+
+(defun view-mask (mask)
+  "Prints MASK to *standard-output* for quick examination. "
+  (let ((dims  (array-dimensions mask)))
+    (format t "~&")
+    (dotimes (h (first dims))
+      (dotimes (w (second dims))
+        (format t "~:[ ~;1~]" (> (aref mask h w) 0)))
+      (terpri))))
+
+;; (view-mask (generate-mask :cross 3))
+;; (view-mask (apply #'generate-mask '(:cross 4)))
+
+(defun binary-morph-kernel (image r c mask op)
+  "Impliments a binary morphological filter using binary MASK centered
+at R,C on IMAGE. OP works as follows:
+* OP = :or  (erosion) any mask pixel set results in output set,
+* OP = :and (dilation), all mask pixels set results in output set,
+* OP = :maj (median), majority of mask pixels set results in output set
+"
+  (let* ((dim (array-dimension mask 0))
+         (1side (floor dim 2))
+         (ro (- r 1side))
+         (co (- c 1side))
+         (rv (if (= 8 (image-bit-depth image)) #xff #xffff)))
+    (cond ((eql op :or)
+           (dotimes (r dim 0)
+             (dotimes (c dim)
+               (when (> (aref mask r c) 0)
+                 (when (> (aref image (+ ro r) (+ co c) 0) 0)
+                   (return-from binary-morph-kernel rv))))))
+          ((eql op :and)
+           (dotimes (r dim rv)
+             (dotimes (c dim)
+               (when (> (aref mask r c) 0)
+                 (when (= (aref image (+ ro r ) (+ co c) 0) 0)
+                   (return-from binary-morph-kernel 0))))))
+          ((eql op :maj)
+           (let ((acc 0))
+             (dotimes (r dim)
+               (dotimes (c dim)
+                 (when (and (> (aref image (+ ro r ) (+ co c) 0) 0)
+                            (> (aref mask r c) 0))
+                   (incf acc))))
+             (if (> acc (floor (array-total-size mask) 2))
+                 rv
+                 0))))))
+
+(defun binary-morphological-filter (image operation mask fill)
+  "Returns a binary-valued GRAYSCALE-IMAGE the same dimensions as
+  IMAGE whose corresponding elements have been calculated using a
+  binary morphological filter. The filter kernel centers a MASK on
+  each pixel in IMAGE and looks at all the pixels in IMAGE which line
+  up with those set in the MASK. OPERATION=:or sets the filtered pixel
+  if any of these is set; :and sets the filtered pixel only if all of
+  these are set; and :maj sets the filtered pixel if a majority of
+  them are set. A border region can't be reached by the center of the
+  mask while keeping the mask within IMAGE. New pixels in the border
+  region are filled with FILL."
+  (let* ((img    (grayscale-image image))
+         (new    (image::make-image-like img))
+         (1side  (floor (array-dimension mask 0) 2))
+         (newrows (- (image-height image) 1side 1side))
+         (newcols (- (image-width image) 1side 1side)))
+    ;; Fill it first so the borders are taken care of
+    (image::fillv new fill)
+    (dotimes (r newrows new)
+      (dotimes (c newcols)
+        (let ((rv (binary-morph-kernel image (+ r 1side) (+ c 1side) mask operation)))
+          ;; (format t " returns rv=~a~%" rv)
+          (setf (aref new (+ r 1side) (+ c 1side) 0) rv))))))
+
+
+(defun erosion-filter (image &key pattern mask (fill '(0)))
+  "Returns a binary GRAYSCALE-IMAGE produced by a morphological filter
+  with an OR operation on the mask kernel.
+
+  The mask may be either specified by PATTERN or provided by MASK, a
+  2-d array of (unsigned-byte 8) values set to 0 or 1.
+
+  The format of PATTERN is '(:square 3) '(:cross 4), where the
+  2*size+1 gives the total width and height of the mask.
+"
+  (let ((mask (if mask mask (apply #'generate-mask pattern))))
+    (binary-morphological-filter image :or mask fill)))
+
+
+(defun dilation-filter (image &key pattern mask (fill '(0)))
+  "Returns a binary GRAYSCALE-IMAGE produced by a morphological filter
+  with an AND operation on the given mask kernel.
+
+  The mask may be either specified by PATTERN or provided by MASK, a
+  2-d array of (unsigned-byte 8) values set to 0 or 1.
+
+  The format of PATTERN is '(:square 3) '(:cross 4), where the
+  2*size+1 gives the total width and height of the mask.
+"
+  (let ((mask (if mask mask (apply #'generate-mask pattern))))
+    (binary-morphological-filter image :and mask fill)))
+
+
+(defun majority-filter (image &key pattern mask (fill '(0)))
+  "Returns a binary GRAYSCALE-IMAGE produced by a morphological filter
+  with an MAJ operation on the given mask kernel (majority).
+
+  The mask may be either specified by PATTERN or provided by MASK, a
+  2-d array of (unsigned-byte 8) values set to 0 or 1.
+
+  The format of PATTERN is '(:square 3) '(:cross 4), where the
+  2*size+1 gives the total width and height of the mask.
+"
+    (let ((mask (if mask mask (apply #'generate-mask pattern))))
+    (binary-morphological-filter image :maj mask fill)))
+
+
+(defun open-filter (image &key pattern mask (fill '(0)))
+  "Returns a binary GRAYSCALE-IMAGE produced by a cascade of an
+erosion filter followed by a dilation filter, both using the same
+mask. See those filters for descriptions of their properties.
+
+The distinctive property of the cascade is size preservation of large
+scale features.
+"
+  (let* ((mask (if mask mask (apply #'generate-mask pattern))))
+    (binary-morphological-filter
+     (binary-morphological-filter image :or mask fill) :and mask fill)))
+
+
+(defun close-filter (image &key pattern mask (fill '(0)))
+  "Returns a binary GRAYSCALE-IMAGE produced by a cascade of a
+dilation filter followed by an erosion filter, both using the same
+mask. See those filters for descriptions of their properties.
+
+The distinctive property of the cascade is size preservation of large
+scale features.
+"
+  (let* ((mask (if mask mask (apply #'generate-mask pattern))))
+    (binary-morphological-filter
+     (binary-morphological-filter image :and mask fill) :or mask fill)))
+
+
 

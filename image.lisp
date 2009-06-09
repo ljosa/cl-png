@@ -117,3 +117,24 @@ the increased bit depth."
 			    (image-channels image) 16)))
        (dotimes (i (array-total-size image) new)
 	 (setf (row-major-aref new i) (* 257 (row-major-aref image i))))))))
+
+(defun grayscale-image (image)
+  "If IMAGE is a GRAYSCALE-IMAGE, return it, otherwise return return a
+GRAYSCALE-IMAGE of the same width and height whose corresponding
+elements are the average average of the channel intensities of IMAGE."
+  (flet ((convert (bit-depth)
+           (let ((gray (make-image (image-height image) (image-width image)
+                                   1 bit-depth))
+                 (tp `(unsigned-byte ,bit-depth)))
+             (dotimes (h (image-height image) gray)
+               (dotimes (w (image-width image))
+                 ;; average the channel intensity
+                 (let ((avg (+ (coerce (aref image h w 0) 'float)
+                               (coerce (aref image h w 1) 'float)
+                               (coerce (aref image h w 2) 'float))))
+                   (setf (aref gray h w 0) (coerce (floor avg 3) tp))))))))
+    (etypecase image
+      (grayscale-image image)
+      (8-bit-image (convert 8))
+      (16-bit-image (convert 16)))))
+

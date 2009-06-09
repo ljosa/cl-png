@@ -52,7 +52,7 @@
         (delete-file pathname)))))
 
 (defun max-diff (im1 im2)
-  (image:intensity-max (image:sub im1 im2)))
+  (image:intensity-max (image:subtract im1 im2)))
 
 
 ;;;# Basic Tests
@@ -88,14 +88,13 @@
   (let ((a (decode-bmpimage "scene-w765"))
         (b (decode-bmpimage "scene-bw765")))
     (assert-true (typep a 'rgb-image))
-    (assert-equal 0 (max-diff a (encode-decode a)))
+    (assert-equal 0 (max-diff a (encode-decode a :keep-tmp t)))
     (assert-true (typep b 'grayscale-image))
-    (assert-error 'bmp::unhandled-bitcount (encode-decode b))))
-;;; Note: haven't implemented encoder for grayscale-image yet
+    (assert-equal 0 (max-diff b (encode-decode b)))))
 
 (define-test encode-modulo-2
   (let ((a (decode-bmpimage "scene-w766")))
-    (assert-equal 0  (image:intensity-max (image:sub a (encode-decode a))))))
+    (assert-equal 0  (image:intensity-max (image:subtract a (encode-decode a))))))
 
 (define-test encode-modulo-3
   (let ((a (decode-bmpimage "scene-w767"))
@@ -103,9 +102,7 @@
     (assert-true (typep a 'rgb-image))
     (assert-equal 0 (max-diff a (encode-decode a)))
     (assert-true (typep b 'grayscale-image))
-    (assert-error 'bmp::unhandled-bitcount (encode-decode b))))
-;;; Note: haven't implemented encoder for grayscale-image yet
-
+    (assert-equal 0 (max-diff b (encode-decode b)))))
 
 (run-tests encode-modulo-0 encode-modulo-2)
 (run-tests encode-modulo-1 encode-modulo-3)
