@@ -178,7 +178,7 @@ Signals an error if writing the image fails."
   ;;  colors_used: 0 defaults to 2**n
   ;;  colors_important is generally ignored
   ;;  
-  (check-type image (or rgb-image rgba-image grayscale-image))
+  (check-type image (or rgb-image grayscale-image))
   (let ((raster-data-offset (if (/= 1 (image-channels image)) 54 (+ 54 1024)))
         (sz                 40)
         (planes             1)

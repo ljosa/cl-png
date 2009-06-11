@@ -42,35 +42,36 @@
     (with-open-file (input pathname :element-type '(unsigned-byte 8))
       (bmp:decode input :strip-alpha strip-alpha))))
 
-(defun decode-pngimage (basename)
-  (let ((pathname (make-name basename "png")))
-    (with-open-file (input pathname :element-type '(unsigned-byte 8))
-      (png:decode input))))
-
 (defun max-diff (im1 im2)
-  (image-max (image-sub im1 im2)))
+  (image:intensity-max (image:subtract im1 im2)))
 
 
 ;;;# Basic Tests
 ;;;
 
+
+(in-package #:image-test)
+
 (define-test channel-order
   (let ((rgb (decode-bmpimage "tagged-RGB"))
         (argb (decode-bmpimage "tagged-ARGB")))
     (assert-true (typep rgb 'rgb-image))
-    (assert-true (typep argb 'rgba-image))))
+    (assert-true (typep rgb 'opaque-image))
+    (assert-true (typep argb 'rgb-image))
+    (assert-false (typep argb 'opaque-image))
+    (assert-true (typep argb 'transparent-image))))
 
 (define-test fill-tests
   (let ((a (make-image 10 10 3)))
-    (assert-error 'error (image-fill a '(99 99)))
-    (assert-error 'error (image-fill a '(1 1 2 2 2)))
-    (image-fill a '(99 88 77))
-    (assert-equalp #(99 88 77) (image-channel-max a))))
+    (assert-error 'error (image:fillv a '(99 99)))
+    (assert-error 'error (image:fillv a '(1 1 2 2 2)))
+    (image:fillv a '(99 88 77))
+    (assert-equalp #(99 88 77) (image:channel-max a))))
 
 (run-tests channel-order)
 (run-tests fill-tests)
 
-
+  
 ;;; Scalar-Valued Functions of One Image
 ;;; 
 ;;;## IMAGE-NORM2
@@ -78,10 +79,10 @@
 (define-test image-norm2
   (let ((a (make-image 10 10 3))
         (b (make-image 10 10 3)))
-    (image-fill a '(1 1 1))
-    (image-fill b '(2 2 2))
-    (assert-equal  300 (image-norm2 a))
-    (assert-equal 1200 (image-norm2 b))))
+    (image:fillv a '(1 1 1))
+    (image:fillv b '(2 2 2))
+    (assert-equal  300 (image:norm2 a))
+    (assert-equal 1200 (image:norm2 b))))
 
 (run-tests image-norm2)
 
@@ -101,19 +102,19 @@
         (c (decode-bmpimage "intrepid-argb"))
         (d (decode-bmpimage "intrepid-argb" :strip-alpha T))
         (err))
-    (setf err (image-norm2 (image-sub a d)))
-    (assert-error 'error (image-sub a b))
-    (assert-error 'error (image-sub a c))
+    (setf err (image:norm2 (image:subtract a d)))
+    (assert-error 'error (image:subtract a b))
+    (assert-error 'error (image:subtract a c))
     (assert-equal 0 err)
-    (let* ((f (image-sub a a))
+    (let* ((f (image:subtract a a))
            (g (make-image-like c))
            (h (make-image-like c)))
-      (assert-equal 0 (image-norm2 f))
-      (image-nsub a d)
-      (assert-equal 0 (image-norm2 a))
-      (image-fill g '(40 40 40 40))
-      (setf h (image-sub c g))
-      (image-nsub c g)
+      (assert-equal 0 (image:norm2 f))
+      (image:subtract* a d)
+      (assert-equal 0 (image:norm2 a))
+      (image:fillv g '(40 40 40 40))
+      (setf h (image:subtract c g))
+      (image:subtract* c g)
       (assert-equalp c h))))
 
 (run-tests image-sub-test)
@@ -123,18 +124,18 @@
 (define-test image-add-test
   (let* ((a (decode-bmpimage "butterfly1"))
          ;; (a-maxch (image-channel-max a))
-         (a-maxin (image-max a))
+         (a-maxin (image:intensity-max a))
          (b (make-image-like a))
          (val '(40 30 20))
          (submax #(215 225 235))
          (c)
          (d))
-    (image-fill b val)
-    (setf c (image-sub a b))
-    (assert-equal (- a-maxin (apply #'+ val)) (image-max c))
-    (assert-equalp submax (image-channel-max c))
-    (setf d (image-add c b))
-    (image-nsub d a)            ; contains bottom end clipping residue
+    (image:fillv b val)
+    (setf c (image:subtract a b))
+    (assert-equal (- a-maxin (apply #'+ val)) (image:intensity-max c))
+    (assert-equalp submax (image:channel-max c))
+    (setf d (image:add c b))
+    (image:subtract* d a)            ; contains bottom end clipping residue
     ;; (format t "maxchans d = ~a~%" (image-channel-max d))
     ))
 ;; (still working on this one)

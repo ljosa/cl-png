@@ -27,17 +27,35 @@ pixel in the i-th row and j-th column of image."
   `(or (8-bit-image ,height ,width ,channels)
        (16-bit-image ,height ,width ,channels)))
 
-(deftype grayscale-image (&optional height width)
-  "An IMAGE with one channel."
-  `(image ,height ,width 1))
+(defun even-channels-p (image)
+  (evenp (array-dimension image 2)))
+
+(deftype transparent-image (&optional height width)
+  "An IMAGE with either two or four channels (i.e. has an alphs
+channel)."
+  `(and (image ,height ,width)
+		(satisfies even-channels-p)))
+
+(deftype opaque-image (&optional height width)
+  "An IMAGE with either 2 or 4 channels"
+  `(and (image ,height ,width)
+        (not (satisfies even-channels-p))))
+
+(defun color-channels-p (image)
+  (> (array-dimension image 2) 2))
 
 (deftype rgb-image (&optional height width)
-  "An IMAGE with three channels."
-  `(image ,height ,width 3))
+  "An IMAGE with either three or four channels."
+  `(and (image ,height ,width)
+		(satisfies color-channels-p)))
 
-(deftype rgba-image (&optional height width)
-  "An IMAGE with four channels."
-  `(image ,height ,width 4))
+(defun grayscale-channels-p (image)
+  (<= (array-dimension image 2) 2))
+
+(deftype grayscale-image (&optional height width)
+  "An IMAGE with either one or two channels."
+  `(and (image ,height ,width)
+        (satisfies grayscale-channels-p)))
 
 (defun make-shareable-array (&rest args)
   #+(or lispworks3 lispworks4 lispworks5.0)
@@ -73,8 +91,14 @@ are undefined."
 channel, whereas RGB images have three."
   (array-dimension image 2))
 
+(defun image-alpha (image) 
+  "Returns T if there is an alpha channel, NIL otherwise."
+  (evenp (array-dimension image 2)))
+
 (defun image-bit-depth (image)
-  "Returns the bit-depth of the image, i.e., the number of bits in the byte representing each sample. The bit depth is 8 or 16, depending on whether the image is an 8-bit-image or a 16-bit-image, respectively."
+  "Returns the bit-depth of the image, i.e., the number of bits in the
+byte representing each sample. The bit depth is 8 or 16, depending on
+whether the image is an 8-bit-image or a 16-bit-image, respectively."
   (etypecase image
     (8-bit-image 8)
     (16-bit-image 16)))
@@ -128,7 +152,7 @@ elements are the average average of the channel intensities of IMAGE."
                  (tp `(unsigned-byte ,bit-depth)))
              (dotimes (h (image-height image) gray)
                (dotimes (w (image-width image))
-                 ;; average the channel intensity
+                 ;; average the RGB channel intensities
                  (let ((avg (+ (coerce (aref image h w 0) 'float)
                                (coerce (aref image h w 1) 'float)
                                (coerce (aref image h w 2) 'float))))

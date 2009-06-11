@@ -125,3 +125,4 @@
 	 (b (16-bit-image a))
 	 (c (8-bit-image b)))
     (assert-equalp a c)))
+

@@ -10,12 +10,14 @@
    #:16-bit-image
    #:grayscale-image
    #:rgb-image
-   #:rgba-image
+   #:transparent-image
+   #:opaque-image
    #:make-image
    #:copy-image
    #:image-height
    #:image-width
    #:image-channels
+   #:image-alpha
    #:image-bit-depth
    ;; ops.lisp
    #:mismatched-image-types

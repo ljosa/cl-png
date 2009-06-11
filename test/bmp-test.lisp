@@ -26,7 +26,7 @@
   #+asdf (merge-pathnames "images/" 
                           (truename (asdf:system-definition-pathname 
                                      '#:bmp-test))))
-
+(run-tests )
 ;;;## Utility functions
 ;;;
 (defun make-name (bn tp)
