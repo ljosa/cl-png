@@ -313,21 +313,7 @@ at R,C on IMAGE. OP works as follows:
 
 (defun erosion-filter (image &key pattern mask (fill '(0)))
   "Returns a binary GRAYSCALE-IMAGE produced by a morphological filter
-  with an OR operation on the mask kernel.
-
-  The mask may be either specified by PATTERN or provided by MASK, a
-  2-d array of (unsigned-byte 8) values set to 0 or 1.
-
-  The format of PATTERN is '(:square 3) '(:cross 4), where the
-  2*size+1 gives the total width and height of the mask.
-"
-  (let ((mask (if mask mask (apply #'generate-mask pattern))))
-    (binary-morphological-filter image :or mask fill)))
-
-
-(defun dilation-filter (image &key pattern mask (fill '(0)))
-  "Returns a binary GRAYSCALE-IMAGE produced by a morphological filter
-  with an AND operation on the given mask kernel.
+  with an AND operation on the mask kernel.
 
   The mask may be either specified by PATTERN or provided by MASK, a
   2-d array of (unsigned-byte 8) values set to 0 or 1.
@@ -337,6 +323,20 @@ at R,C on IMAGE. OP works as follows:
 "
   (let ((mask (if mask mask (apply #'generate-mask pattern))))
     (binary-morphological-filter image :and mask fill)))
+
+
+(defun dilation-filter (image &key pattern mask (fill '(0)))
+  "Returns a binary GRAYSCALE-IMAGE produced by a morphological filter
+  with an OR operation on the given mask kernel.
+
+  The mask may be either specified by PATTERN or provided by MASK, a
+  2-d array of (unsigned-byte 8) values set to 0 or 1.
+
+  The format of PATTERN is '(:square 3) '(:cross 4), where the
+  2*size+1 gives the total width and height of the mask.
+"
+  (let ((mask (if mask mask (apply #'generate-mask pattern))))
+    (binary-morphological-filter image :or mask fill)))
 
 
 (defun majority-filter (image &key pattern mask (fill '(0)))
@@ -363,7 +363,7 @@ scale features.
 "
   (let* ((mask (if mask mask (apply #'generate-mask pattern))))
     (binary-morphological-filter
-     (binary-morphological-filter image :or mask fill) :and mask fill)))
+     (binary-morphological-filter image :and mask fill) :or mask fill)))
 
 
 (defun close-filter (image &key pattern mask (fill '(0)))
@@ -376,7 +376,7 @@ scale features.
 "
   (let* ((mask (if mask mask (apply #'generate-mask pattern))))
     (binary-morphological-filter
-     (binary-morphological-filter image :and mask fill) :or mask fill)))
+     (binary-morphological-filter image :or mask fill) :and mask fill)))
 
 
 
