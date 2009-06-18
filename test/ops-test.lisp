@@ -66,8 +66,8 @@
                              ((12 13 1 16) grayscale-image (88))
                              ((14 15 3 8)  rgb-image (99 88 77))
                              ((16 17 3 16) rgb-image (66 55 44))
-                             ((18 19 4 8)  rgba-image (111 122 133 144))
-                             ((20 21 4 16) rgba-image (122 133 144 155))))
+                             ((18 19 4 8)  rgb-image (111 122 133 144))
+                             ((20 21 4 16) rgb-image (122 133 144 155))))
 
 ;;;## Test FILLV
 ;;;
@@ -163,6 +163,17 @@
 (run-tests image-sub-test)
 
 
+;;;## MOVE-TO
+;;;
+(define-test image-move-to-test
+    (let* ((a (image:fillv (make-image 4 4 1) '(100)))
+           (b (image:fillv (make-image 4 4 1) '(10)))
+           (c (image:fillv (make-image 4 4 1) '(80)))
+           (d (image:fillv (make-image 4 4 1) '(30))))
+      (assert-equalp c (image::move-towards a b 20))
+      (assert-equalp d (image::move-towards b a 20))))
+
+(run-tests image-move-to-test)
 
 
 

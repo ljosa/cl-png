@@ -379,4 +379,15 @@ scale features.
      (binary-morphological-filter image :or mask fill) :and mask fill)))
 
 
+(defun move-towards (im1 im2 step)
+  "Moves the pixels values of binary GRAYSCALE-IMAGE IM1 towards IM2
+  by at most STEP. IM1 is altered, IM2 is not. Step can be 0-255 for
+  8-bit depths and 0-65535 for 16-bit depths. "
+  (dotimes (i (image-height im1) im1)
+	(dotimes (j (image-width im1))
+      (let ((src (aref im1 i j 0))
+            (dst (aref im2 i j 0)))
+        (setf (aref im1 i j 0) (+ src (* (min (abs (- dst src)) step)
+                                         (if (< dst src) -1 1))))))))
+
 
