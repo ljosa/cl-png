@@ -391,3 +391,82 @@ scale features.
                                          (if (< dst src) -1 1))))))))
 
 
+(defun color-channels (image)
+  (etypecase image
+    (grayscale-image 1)
+    (rgb-image 3)))
+
+(defun max-color-index (image)
+  (ecase (image-bit-depth image) (8 255) (16 65535)))
+
+(defun pixel-type (image) (cadr (type-of image)))
+
+
+(defun convolve (image kernel &key fill)
+  "Returns a new image of type IMAGE produced by convolving KERNEL
+  with IMAGE. This is not a circular convolution and no values are
+  computed in the border region where the kernel is not completely
+  contained in IMAGE.
+
+  FILL controls the output image size: if set, it returns an image the
+  same size as IMAGE, if NIL, it returns an image which is shrunk to
+  exclude the uncomputed border region (the dimensions of KERNEL-1).
+
+  KERNEL must be a 2-d square mask with odd dimensions (e.g. 3x3), a
+  simple-array of type FLOAT. IMAGE can be GRAYSCALE-IMAGE or an
+  RGB-IMAGE - in the latter case the channels are convolved with the
+  KERNEL seperately.
+
+  If FILL is set, it must consist of a list of values of the same type
+  as the pixels of IMAGE. For example, an rgb-image with 8-bit pixels
+  might have a fill of '(#x7f #x7f #x7f), whereas a grayscale-image
+  would have a fill of '(#x7f). If FILL is not set the image will shrink.
+"
+  (declare (optimize (speed 2) (compilation-speed 0) (safety 0) (debug 0)))
+  (declare (type (simple-array float (* *)) kernel))
+  ;; (declare (type (simple-array (unsigned-byte 8) (* * *)) image))
+  (let* ((dim     (array-dimension kernel 0))
+         (1side   (floor dim 2))
+         (colors  (the fixnum (color-channels image)))
+         (maxval  (the fixnum (max-color-index image)))
+         (width   (the fixnum (image-width image)))
+         (height  (the fixnum (image-height image)))
+         ;; (typ     (pixel-type image))
+         )
+    (flet ((innerprod (ro co k) ;; (ro,co) are the corner points of the mask
+             (declare (type fixnum ro co k))
+             (let ((accum 0.e0))
+               (declare (type float accum))
+               (dotimes (r dim)
+                 (dotimes (c dim)
+                   (incf accum (* (aref kernel r c)
+                                  (the fixnum (aref image (+ ro r) (+ co c) k))))))
+               (the fixnum (max 0 (min (the fixnum (floor accum)) maxval))))))
+      (let ((newrows (the fixnum (- height 1side 1side)))
+            (newcols (the fixnum (- width  1side 1side))))
+        (if fill
+            ;; Convolution preserving size with fill
+            (let ((new (make-image-like image)))
+              (dotimes (r 1side)
+                (dotimes (c width)
+                  (dotimes (k colors)
+                    (setf (aref new r c k) (nth k fill)
+                          (aref new (- height r 1) c k) (nth k fill)))))
+              (dotimes (c 1side)
+                (dotimes (r height)
+                  (dotimes (k colors)
+                    (setf (aref new r c k) (nth k fill)
+                          (aref new r (- width c 1) k) (nth k fill)))))
+              (dotimes (r newrows new)
+                (dotimes (c newcols)
+                  (dotimes (k colors)
+                    (setf (the fixnum (aref new (+ r 1side) (+ c 1side) k)) (innerprod r c k))))))
+            ;; Shrinking convolution
+            (let ((new (make-image newrows newcols (image-channels image) (image-bit-depth image))))
+              (dotimes (r newrows new)
+                (dotimes (c newcols)
+                  (dotimes (k colors)
+                    (setf (the fixnum (aref new r c k)) (innerprod r c k)))))))))))
+
+
+

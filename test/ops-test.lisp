@@ -194,8 +194,49 @@
 
 
 
+;;;# Edge Detector
+;;;
+;;; We will use a convolutional filter with this kernel:
+;;;
+;;;  0 -1  0
+;;; -1  4 -1 
+;;;  0 -1  0
+;;;  
+
+(defparameter *edge-kernel*
+  (let ((mask (make-array (list 3 3)
+                          :element-type 'float :initial-element 0.e0)))
+    (setf (aref mask 0 1) -1.e0
+          (aref mask 1 0) -1.e0
+          (aref mask 1 2) -1.e0
+          (aref mask 2 1) -1.e0
+          (aref mask 1 1)  4.e0)
+    mask))
+(print *edge-kernel*)
 
 
+(define-test convolve-edge
+  (let* ((a (png:decode-file (merge-pathnames "butterfly8-gray.png" *images-pathname*)))
+         (c (png:decode-file (merge-pathnames "butterfly8.png" *images-pathname*)))
+         (ea)
+         (ec))
+    (time
+     (setf ea (image::convolve a *edge-kernel* :fill '(#x7f))))
+    (png:encode-file ea "test-ea.png")
+
+    (time
+     (setf ec (image::convolve c *edge-kernel*)))
+    (format t "ec size:~s~%" (size ec))
+    (png:encode-file ec "test-ec.png")
+
+    (time
+     (setf ec (image::convolve c *edge-kernel* :fill '(#x7f #x7f #x7f))))
+    (format t "ec size:~s~%" (size ec))
+    (png:encode-file ec "test-ecb.png")
+
+    (assert-true (typep ec 'rgb-image))))
+
+(run-tests convolve-edge)
 
 ;; (run-tests)
 

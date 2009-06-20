@@ -45,4 +45,6 @@
    #:majority-filter
    #:open-filter
    #:close-filter
+   #:move-towards
+   #:convolve
    ))
