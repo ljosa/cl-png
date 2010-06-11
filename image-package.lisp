@@ -9,7 +9,9 @@
    #:8-bit-image
    #:16-bit-image
    #:grayscale-image
+   #:grayscale-alpha-image
    #:rgb-image
+   #:rgb-alpha-image
    #:transparent-image
    #:opaque-image
    #:make-image

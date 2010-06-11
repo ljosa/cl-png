@@ -8,8 +8,9 @@
    #:8-bit-image
    #:16-bit-image
    #:grayscale-image
+   #:grayscale-alpha-image
    #:rgb-image
-   #:argb-image
+   #:rgb-alpha-image
    #:make-image
    #:copy-image
    #:image-height

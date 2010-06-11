@@ -37,7 +37,7 @@ channel)."
 		(satisfies even-channels-p)))
 
 (deftype opaque-image (&optional height width)
-  "An IMAGE with either 2 or 4 channels"
+  "An IMAGE with either 1 or 3 channels"
   `(and (image ,height ,width)
         (not (satisfies even-channels-p))))
 
@@ -49,6 +49,14 @@ channel)."
   `(and (image ,height ,width)
 		(satisfies color-channels-p)))
 
+(defun color-and-alpha-channels-p (image)
+  (= (array-dimension image 2) 4))
+
+(deftype rgb-alpha-image (&optional height width)
+  "An IMAGE with exactly four channels."
+  `(and (image ,height ,width)
+		(satisfies color-and-alpha-channels-p)))
+
 (defun grayscale-channels-p (image)
   (<= (array-dimension image 2) 2))
 
@@ -56,6 +64,14 @@ channel)."
   "An IMAGE with either one or two channels."
   `(and (image ,height ,width)
         (satisfies grayscale-channels-p)))
+
+(defun grayscale-alpha-channels-p (image)
+  (= (array-dimension image 2) 2))
+
+(deftype grayscale-alpha-image (&optional height width)
+  "An IMAGE with exactly two channels."
+  `(and (image ,height ,width)
+        (satisfies grayscale-alpha-channels-p)))
 
 (defun make-shareable-array (&rest args)
   #+(or lispworks3 lispworks4 lispworks5.0)
@@ -143,22 +159,134 @@ the increased bit depth."
 	 (setf (row-major-aref new i) (* 257 (row-major-aref image i))))))))
 
 (defun grayscale-image (image)
-  "If IMAGE is a GRAYSCALE-IMAGE, return it, otherwise return return a
+  "If IMAGE is a GRAYSCALE-IMAGE, return it, otherwise return a
 GRAYSCALE-IMAGE of the same width and height whose corresponding
-elements are the average average of the channel intensities of IMAGE."
-  (flet ((convert (bit-depth)
-           (let ((gray (make-image (image-height image) (image-width image)
-                                   1 bit-depth))
-                 (tp `(unsigned-byte ,bit-depth)))
+elements are the average of the channel intensities of IMAGE.
+Strip out any alpha channel present."
+  (flet ((convert ()
+           (let* ((bit-depth (image-bit-depth image))
+		  (gray (make-image (image-height image) (image-width image)
+				    1 bit-depth))
+		  (tp `(unsigned-byte ,bit-depth)))
              (dotimes (h (image-height image) gray)
                (dotimes (w (image-width image))
                  ;; average the RGB channel intensities
                  (let ((avg (+ (coerce (aref image h w 0) 'float)
                                (coerce (aref image h w 1) 'float)
                                (coerce (aref image h w 2) 'float))))
-                   (setf (aref gray h w 0) (coerce (floor avg 3) tp))))))))
+                   (setf (aref gray h w 0) (coerce (floor avg 3) tp)))))))
+	 (strip ()
+           (let ((gray (make-image (image-height image) (image-width image)
+                                   1 (image-bit-depth image))))
+             (dotimes (h (image-height image) gray)
+               (dotimes (w (image-width image))
+		 (setf (aref gray h w 0) (aref image h w 0)))))))
     (etypecase image
+      (grayscale-alpha-image (strip))
       (grayscale-image image)
-      (8-bit-image (convert 8))
-      (16-bit-image (convert 16)))))
+      (t (convert)))))
 
+(defun grayscale-alpha-image (image)
+  "If IMAGE is a GRAYSCALE-ALPHA-IMAGE, return it, otherwise return a
+GRAYSCALE-ALPHA-IMAGE of the same width and height whose corresponding
+elements are the average of the channel intensities of IMAGE.
+Add an alpha channel if needed."
+  (flet ((convert ()
+           (let* ((bit-depth (image-bit-depth image))
+		  (gray (make-image (image-height image) (image-width image)
+				    2 bit-depth))
+		  (tp `(unsigned-byte ,bit-depth))
+		  (use-this-alpha (cond
+				    ((image-alpha image) nil)
+				    ((= bit-depth 8) 255)
+				    ((= bit-depth 16) 65535))))
+             (dotimes (h (image-height image) gray)
+               (dotimes (w (image-width image))
+                 ;; average the RGB channel intensities
+                 (let ((avg (+ (coerce (aref image h w 0) 'float)
+                               (coerce (aref image h w 1) 'float)
+                               (coerce (aref image h w 2) 'float))))
+                   (setf (aref gray h w 0) (coerce (floor avg 3) tp)
+			 (aref gray h w 1) (or use-this-alpha
+					       (aref image h w 3))))))))
+	 (add-alpha ()
+           (let* ((bit-depth (image-bit-depth image))
+		  (gray (make-image (image-height image) (image-width image)
+				    2 bit-depth))
+		  (use-this-alpha (cond
+				    ((= bit-depth 8) 255)
+				    ((= bit-depth 16) 65535))))
+             (dotimes (h (image-height image) gray)
+               (dotimes (w (image-width image))
+		 (setf (aref gray h w 0) (aref image h w 0)
+		       (aref gray h w 1) use-this-alpha))))))
+    (etypecase image
+      (grayscale-alpha-image image)
+      (grayscale-image (add-alpha))
+      (t (convert)))))
+
+(defun rgb-image (image)
+  "If IMAGE is an RGB-IMAGE, return it, otherwise return an
+RGB-IMAGE of the same width and height whose corresponding
+elements are the grayscale value repeated as needed.  Strip
+out any alpha channels."
+  (flet ((convert ()
+           (let ((rgb (make-image (image-height image) (image-width image)
+                                   3 (image-bit-depth image))))
+             (dotimes (h (image-height image) rgb)
+               (dotimes (w (image-width image))
+                   (setf (aref rgb h w 0) (aref image h w 0)
+			 (aref rgb h w 1) (aref image h w 0)
+			 (aref rgb h w 2) (aref image h w 0))))))
+	 (strip ()
+           (let ((rgb (make-image (image-height image) (image-width image)
+                                   3 (image-bit-depth image))))
+             (dotimes (h (image-height image) rgb)
+               (dotimes (w (image-width image))
+                   (setf (aref rgb h w 0) (aref image h w 0)
+			 (aref rgb h w 1) (aref image h w 1)
+			 (aref rgb h w 2) (aref image h w 2)))))))
+    (etypecase image
+      (rgb-alpha-image (strip))
+      (rgb-image image)
+      (t (convert)))))
+
+(defun rgb-alpha-image (image)
+  "If IMAGE is a RGB-ALPHA-IMAGE, return it, otherwise return a
+RGB-ALPHA-IMAGE of the same width and height whose corresponding
+elements are the rgb elements of the original if the original is
+an RGB-IMAGE and the repeated grayscale values if the original is
+a GRAYSCALE image.  Add an alpha channel if needed."
+  (flet ((convert ()
+           (let* ((bit-depth (image-bit-depth image))
+		  (rgba (make-image (image-height image) (image-width image)
+				    4 bit-depth))
+		  (use-this-alpha (cond
+				    ((image-alpha image) nil)
+				    ((= bit-depth 8) 255)
+				    ((= bit-depth 16) 65535))))
+             (dotimes (h (image-height image) rgba)
+               (dotimes (w (image-width image))
+                 ;; average the RGB channel intensities
+                   (setf (aref rgba h w 0) (aref image h w 0)
+			 (aref rgba h w 1) (aref image h w 0)
+			 (aref rgba h w 2) (aref image h w 0)
+			 (aref rgba h w 3) (or use-this-alpha
+					       (aref image h w 1)))))))
+	 (add-alpha ()
+           (let* ((bit-depth (image-bit-depth image))
+		  (rgba (make-image (image-height image) (image-width image)
+				    4 bit-depth))
+		  (use-this-alpha (cond
+				    ((= bit-depth 8) 255)
+				    ((= bit-depth 16) 65535))))
+             (dotimes (h (image-height image) rgba)
+               (dotimes (w (image-width image))
+		 (setf (aref rgba h w 0) (aref image h w 0)
+		       (aref rgba h w 1) (aref image h w 1)
+		       (aref rgba h w 2) (aref image h w 2)
+		       (aref rgba h w 3) use-this-alpha))))))
+    (etypecase image
+      (rgb-alpha-image image)
+      (rgb-image (add-alpha))
+      (t (convert)))))
