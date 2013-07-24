@@ -2,7 +2,7 @@
 
 
 (define-foreign-library libpng
-;;  (:unix (:or "libpng12.0.dylib" "libpng12.dylib" "libpng12.so.0"))
+  (:darwin "libpng12.0.dylib")
   (t (:default "libpng12")))
 
 (use-foreign-library libpng)
