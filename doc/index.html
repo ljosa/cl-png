@@ -126,6 +126,7 @@ before, and better able to handle corner cases.
 <h2><a name="Download">Download</a></h2>
 
 <ul>
+  <li>The easiest way to download and install CL-PNG is using QuickLisp: <tt>(ql:quickload "png")</tt>
   <li>Version 0.6: <A
 href="http://www.ljosa.com/~ljosa/software/cl-png/download/cl-png-0.6.tar.gz">cl-png-0.6.tar.gz</A>
   <li><A href="http://www.ljosa.com/~ljosa/software/cl-png/download/">Tarballs
@@ -148,17 +149,17 @@ href="http://common-lisp.net/project/alexandria/">Alexandria</a>, <a
 href="http://common-lisp.net/project/babel/">Babel</a>, and <a
 href="http://www.cliki.net/trivial-features">trivial-features</a>.
 
-<p>If you have <a
-href="http://common-lisp.net/project/asdf-install/">ASDF-Install</a>,
-installation is easy: the following takes care of CL-PNG and all dependencies:
+<p>The easiest way to download and install CL-PNG and the Lisp
+libraries that it depends on is
+using <a href="http://www.quicklisp.org/">QuickLisp</a>:
 <pre>
-    (asdf-install:install '#:png)
+    (ql:quickload "png")
 </pre>
 
-<p>Otherwise, install the dependencies, then symlink <tt>png.asd</tt>
-(and, if you'd like to run the unit tests, <tt>png-test.asd</tt>) to
-one of the directories in <a
-href="http://constantly.at/lisp/asdf/Using-asdf-to-load-systems.html#Using%20asdf%20to%20load%20systems"><b>asdf:*central-registry*</b></a>.
+<p>If you do not want to use QuickLisp, install the dependencies, then
+symlink <tt>png.asd</tt> (and, if you'd like to run the unit
+tests, <tt>png-test.asd</tt>) to one of the directories
+in <a href="http://constantly.at/lisp/asdf/Using-asdf-to-load-systems.html#Using%20asdf%20to%20load%20systems"><b>asdf:*central-registry*</b></a>.
 Then, evaluate <code>(asdf:oos 'asdf:load-op '#:png)</code> in order
 to compile and load CL-PNG.</p>
 
