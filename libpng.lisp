@@ -1,13 +1,18 @@
 (in-package #:png)
 
+#+cffi-features:darwin
+(push #p"/usr/X11/lib/" cffi:*foreign-library-directories*)
+
+#+cffi-features:darwin
+(push #p"/opt/local/lib/" cffi:*foreign-library-directories*)
 
 (define-foreign-library libpng
-  (:darwin "libpng12.0.dylib")
-  (t (:default "libpng12")))
+  (:darwin "libpng.dylib")
+  (t (:default "libpng")))
 
 (use-foreign-library libpng)
 
-(defconstant +png-libpng-ver-string+ (symbol-name '|1.2.26|))
+(defparameter +png-libpng-ver-string+ (get-png-libpng-ver-string))
 
 ;;; Foreign function definitions.
 
@@ -164,7 +169,7 @@
   (ensure-buffer-sufficient length)
   (let ((bytes-read (read-sequence *buffer* *stream* :start 0 :end length)))
     (unless (= bytes-read length)
-      (error "Expected to read ~D bytes, but only read ~D." length 
+      (error "Expected to read ~D bytes, but only read ~D." length
 	     bytes-read)))
   (with-pointer-to-vector-data (buffer-ptr *buffer*)
     (memcpy data buffer-ptr length)))
@@ -208,9 +213,9 @@
 	 (with-foreign-pointer (,pointer (foreign-type-size :pointer))
 	   (setf (mem-ref ,pointer :pointer) ,var)
 	   ,(ecase direction
-		   (:input `(png-destroy-read-struct ,pointer (null-pointer) 
+		   (:input `(png-destroy-read-struct ,pointer (null-pointer)
 						     (null-pointer)))
-		   (:output `(png-destroy-write-struct ,pointer 
+		   (:output `(png-destroy-write-struct ,pointer
 						       (null-pointer)))))))))
 
 (defmacro with-png-info-struct ((var png-struct initform) &body body)
@@ -250,7 +255,7 @@
        (with-pointer-to-vector-data (,rows-ptr ,row-pointers)
 	 (with-pointer-to-array-data (,raw-data ,image)
 	   (dotimes (,i (image-height ,image))
-	     (setf (mem-aref ,rows-ptr :pointer ,i) 
+	     (setf (mem-aref ,rows-ptr :pointer ,i)
 		   (inc-pointer ,raw-data (* ,i (image-width ,image)
 					     (image-channels ,image)
 					     (bytes-per-pixel ,image)))))
@@ -334,7 +339,7 @@ Signals an error if writing the image fails."
 	(png-set-write-fn png-ptr (null-pointer) (callback user-write-data)
 			  (callback user-flush-data))
 	(png-set-ihdr png-ptr info-ptr (image-width image) (image-height image)
-		      (image-bit-depth image) 
+		      (image-bit-depth image)
 		      (if (= (image-channels image) 1)
 			  +png-color-type-gray+
 			  +png-color-type-rgb+)
@@ -344,8 +349,8 @@ Signals an error if writing the image fails."
 	  (png-set-bgr png-ptr))
 	(with-row-pointers (row-pointers image)
 	  (png-set-rows png-ptr info-ptr row-pointers)
-	  (png-write-png png-ptr info-ptr 
-			 #+little-endian +png-transform-swap-endian+ 
+	  (png-write-png png-ptr info-ptr
+			 #+little-endian +png-transform-swap-endian+
 			 #-little-endian +png-transform-identity+
 			 (null-pointer))))))
   t)
