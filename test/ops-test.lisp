@@ -214,7 +214,8 @@
     mask))
 (print *edge-kernel*)
 
-
+;; Disabled because the input file butterfly8-gray.png is missing.
+#+ignore
 (define-test convolve-edge
   (let* ((a (png:decode-file (merge-pathnames "butterfly8-gray.png" *images-pathname*)))
          (c (png:decode-file (merge-pathnames "butterfly8.png" *images-pathname*)))
@@ -236,6 +237,6 @@
 
     (assert-true (typep ec 'rgb-image))))
 
-(run-tests convolve-edge)
+;;(run-tests convolve-edge)
 
 ;; (run-tests)
