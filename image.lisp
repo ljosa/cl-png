@@ -3,8 +3,58 @@
 ;;;   operations efficient is a pain.  Should see if I can just pass
 ;;;   the 3-D array to the C functions.
 
+(defpackage #:image
+  (:documentation "Image representation and manipulation.")
+  (:use #:common-lisp)
+  (:export
+   ;; image.lisp
+   #:image
+   #:8-bit-image
+   #:16-bit-image
+   #:grayscale-image
+   #:grayscale-alpha-image
+   #:rgb-image
+   #:rgb-alpha-image
+   #:transparent-image
+   #:opaque-image
+   #:make-image
+   #:copy-image
+   #:image-height
+   #:image-width
+   #:image-channels
+   #:image-alpha
+   #:image-bit-depth
+   ;; ops.lisp
+   #:mismatched-image-types
+   #:mismatched-image-sizes
+   #:mismatched-image-dims
+   #:make-image-like
+   #:size
+   #:dims
+   #:fillv
+   #:channel-min
+   #:channel-max
+   #:intensity-max
+   #:norm2
+   #:rotate
+   #:flip
+   #:mirror
+   #:add
+   #:add*
+   #:subtract
+   #:subtract*
+   #:threshold-filter
+   #:binary-morphological-filter
+   #:erosion-filter
+   #:dilation-filter
+   #:majority-filter
+   #:open-filter
+   #:close-filter
+   #:move-towards
+   #:convolve))
+
 (in-package #:image)
-  
+
 (deftype 8-bit-image (&optional height width channels)
   "An IMAGE with element type (UNSIGNED-BYTE 8)."
   `(and (simple-array (unsigned-byte 8) (,height ,width ,channels))))
@@ -78,7 +128,7 @@ channel)."
   (sys:in-static-area
     (apply #'make-array args))
   #-(or lispworks3 lispworks4 lispworks5.0)
-  (apply #'make-array 
+  (apply #'make-array
 	 #+(or lispworks allegro) :allocation
 	 #+lispworks :static #+allegro :static-reclaimable
 	 args))
@@ -89,12 +139,12 @@ channels.  The image will be an 8-bit-image or a 16-bit-image depending
 on the value of byte-size.  Makes an 8-BIT-IMAGE if BIT-DEPTH is 8 or
 NIL and a 16-BIT-IMAGE if BIT-DEPTH is 16.  The contents of the image
 are undefined."
-  (make-shareable-array (list height width channels) 
+  (make-shareable-array (list height width channels)
                         :element-type (ecase bit-depth
                                         ((8 nil) '(unsigned-byte 8))
                                         (16 '(unsigned-byte 16)))))
 
-(defun image-height (image) 
+(defun image-height (image)
   "The height of image, i.e., the number of rows."
   (array-dimension image 0))
 
@@ -102,12 +152,12 @@ are undefined."
   "The width of IMAGE, i.e., the number of columns."
   (array-dimension image 1))
 
-(defun image-channels (image) 
+(defun image-channels (image)
   "The number of channels in IMAGE.  Grayscale images have one
 channel, whereas RGB images have three."
   (array-dimension image 2))
 
-(defun image-alpha (image) 
+(defun image-alpha (image)
   "Returns T if there is an alpha channel, NIL otherwise."
   (evenp (array-dimension image 2)))
 
@@ -137,7 +187,7 @@ nearest integer.  The effect of this division is to compress the
 dynamic range of the image so as to fit within the smaller bit depth."
   (etypecase image
     (8-bit-image image)
-    (16-bit-image 
+    (16-bit-image
      (let ((new (make-image (image-height image) (image-width image)
 			    (image-channels image) 8)))
        (dotimes (i (array-total-size image) new)
@@ -152,7 +202,7 @@ multiplication is to stretch the dynamic range of the image to utilize
 the increased bit depth."
   (etypecase image
     (16-bit-image image)
-    (8-bit-image 
+    (8-bit-image
      (let ((new (make-image (image-height image) (image-width image)
 			    (image-channels image) 16)))
        (dotimes (i (array-total-size image) new)
