@@ -17,10 +17,10 @@ jobs:
 
       - run: ln -s /src/cl-png /root/quicklisp/local-projects/png
 
-      - run: sbcl --load /root/quicklisp/setup.lisp --eval '(ql:quickload "png")' --eval "(asdf:oos 'asdf:load-op '#:png-test)" --eval "(lisp-unit:run-all-tests :png-test)" --quit
+      - run: sbcl --disable-debugger --load /root/quicklisp/setup.lisp --eval '(ql:quickload "png")' --eval "(asdf:oos 'asdf:load-op '#:png-test)" --eval "(lisp-unit:run-all-tests :png-test)" --quit
 
-      - run: sbcl --load /root/quicklisp/setup.lisp --eval '(ql:quickload "png")' --eval "(asdf:oos 'asdf:load-op '#:image-test)" --eval "(lisp-unit:run-all-tests :image-test)" --quit
+      - run: sbcl --disable-debugger --load /root/quicklisp/setup.lisp --eval '(ql:quickload "png")' --eval "(asdf:oos 'asdf:load-op '#:image-test)" --eval "(lisp-unit:run-all-tests :image-test)" --quit
 
-      - run: sbcl --load /root/quicklisp/setup.lisp --eval '(ql:quickload "png")' --eval "(asdf:oos 'asdf:load-op '#:bmp-test)" --eval "(lisp-unit:run-all-tests :bmp-test)" --quit
+      - run: sbcl --disable-debugger --load /root/quicklisp/setup.lisp --eval '(ql:quickload "png")' --eval "(asdf:oos 'asdf:load-op '#:bmp-test)" --eval "(lisp-unit:run-all-tests :bmp-test)" --quit
 
-      - run: sbcl --load /root/quicklisp/setup.lisp --eval '(ql:quickload "png")' --eval "(asdf:oos 'asdf:load-op '#:ops-test)" --eval "(lisp-unit:run-all-tests :ops-test)" --quit
+      - run: sbcl --disable-debugger --load /root/quicklisp/setup.lisp --eval '(ql:quickload "png")' --eval "(asdf:oos 'asdf:load-op '#:ops-test)" --eval "(lisp-unit:run-all-tests :ops-test)" --quit
