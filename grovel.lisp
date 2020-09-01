@@ -9,6 +9,7 @@
 (constant (+png-color-mask-alpha+ "PNG_COLOR_MASK_ALPHA"))
 (constant (+png-color-type-palette+ "PNG_COLOR_TYPE_PALETTE"))
 (constant (+png-color-type-rgb+ "PNG_COLOR_TYPE_RGB"))
+(constant (+png-color-type-rgb-alpha+ "PNG_COLOR_TYPE_RGB_ALPHA"))
 (constant (+png-color-type-gray+ "PNG_COLOR_TYPE_GRAY"))
 (constant (+png-color-type-gray-alpha+ "PNG_COLOR_TYPE_GRAY_ALPHA"))
 (constant (+png-transform-strip-16+ "PNG_TRANSFORM_STRIP_16"))

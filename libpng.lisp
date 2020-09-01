@@ -340,9 +340,11 @@ Signals an error if writing the image fails."
 			  (callback user-flush-data))
 	(png-set-ihdr png-ptr info-ptr (image-width image) (image-height image)
 		      (image-bit-depth image)
-		      (if (= (image-channels image) 1)
-			  +png-color-type-gray+
-			  +png-color-type-rgb+)
+                      (ecase (image-channels image)
+                        (1 +png-color-type-gray+)
+                        (2 +png-color-type-gray-alpha+)
+                        (3 +png-color-type-rgb+)
+                        (4 +png-color-type-rgb-alpha+))
 		      +png-interlace-none+ +png-compression-type-default+
 		      +png-filter-type-default+)
 	(when swapBGR
