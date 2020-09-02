@@ -2,24 +2,18 @@
 
 (in-package #:cl-user)
 
-(eval-when (:load-toplevel :execute)
-  (asdf:operate 'asdf:load-op '#:cffi-grovel))
-
-#+cffi-features:darwin
-(push #p"/usr/X11/lib/" cffi:*foreign-library-directories*)
-
-#+cffi-features:darwin
-(push #p"/opt/local/lib/" cffi:*foreign-library-directories*)
-
 (asdf:defsystem #:png
   :description "Read and write PNG (Portable Network Graphics) files."
   :perform (asdf:load-op :after (op png)
-						 (pushnew :png *features*))
-  :components ((:file "png-package")
+                         (pushnew :png *features*))
+  :components ((:file "png-package" :depends-on ("image"))
 	       (:file "compat" :depends-on ("png-package"))
-	       (:file "libpng" :depends-on ("grovel" "compat" "png-package"))
-	       (cffi-grovel:grovel-file "grovel"))
-  :depends-on (#:cffi #:image))
-
-
-
+	       (:file "libpng" :depends-on ("grovel" "compat" "png-package" "wrappers"))
+	       (:cffi-grovel-file "grovel")
+               (:cffi-wrapper-file "wrappers")
+               (:file "image")
+               (:file "bmp" :depends-on ("image"))
+               (:file "pnm" :depends-on ("image"))
+               (:file "ops" :depends-on ("image")))
+  :depends-on (#:cffi)
+  :defsystem-depends-on ("cffi-grovel"))

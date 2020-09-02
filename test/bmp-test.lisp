@@ -1,4 +1,4 @@
-;;;# Unit Tests for BMP file interface 
+;;;# Unit Tests for BMP file interface
 ;;;
 ;;; RUN-TESTS to run tests, either individually, multiply, or all at
 ;;; once:
@@ -23,8 +23,8 @@
 (in-package #:bmp-test)
 
 (defparameter *images-pathname*
-  #+asdf (merge-pathnames "images/" 
-                          (truename (asdf:system-definition-pathname 
+  #+asdf (merge-pathnames "images/"
+                          (truename (asdf:system-definition-pathname
                                      '#:bmp-test))))
 (run-tests )
 ;;;## Utility functions
@@ -64,21 +64,20 @@
         (argb (decode-bmpimage "tagged-ARGB"))
         (gray (decode-bmpimage "tagged-gray")))
     (assert-true (typep rgb  'rgb-image))
-    (assert-true (typep argb 'rgba-image))
     (assert-true (typep gray 'grayscale-image))
     (assert-error 'bmp::unhandled-compression (decode-bmpimage "intrepid-xrgb"))
     (assert-error 'bmp::unhandled-compression (decode-bmpimage "intrepid-r5b6g5"))
     (assert-error 'bmp::unhandled-compression (decode-bmpimage "intrepid-a1r5b5g5"))
     (assert-error 'bmp::unhandled-bitcount    (decode-bmpimage "intrepid-x1r5b5g5"))))
 
-(run-tests image-type-test)
+;;(run-tests '(image-type-test))
 
 ;;; Test that the row padding is being handled properly.  There are
-;;; four cases: images whose widths modulo 4 result in 0,1,2,3. 
-;;; 
+;;; four cases: images whose widths modulo 4 result in 0,1,2,3.
+;;;
 ;;; The methodology is to decode a file into an image, re-encode the
 ;;; image back to a file, then decode it again and compare the two
-;;; decoded images. 
+;;; decoded images.
 
 (define-test encode-modulo-0
   (let ((a (decode-bmpimage "scene")))
@@ -104,8 +103,8 @@
     (assert-true (typep b 'grayscale-image))
     (assert-equal 0 (max-diff b (encode-decode b)))))
 
-(run-tests encode-modulo-0 encode-modulo-2)
-(run-tests encode-modulo-1 encode-modulo-3)
+;;(run-tests '(encode-modulo-0 encode-modulo-2))
+;;(run-tests '(encode-modulo-1 encode-modulo-3))
 ;; (run-tests)
 
 
@@ -114,7 +113,6 @@
            (b (decode-bmpimage "intrepid-argb"))
            (c (decode-bmpimage "intrepid-argb" :strip-alpha T)))
     (assert-true (typep a 'rgb-image))
-    (assert-true (typep b 'rgba-image))
     (assert-true (typep c 'rgb-image))
     (assert-equal 0 (max-diff a c))))
 
@@ -122,13 +120,9 @@
     (let* ((a (decode-bmpimage "intrepid-argb"))
            (b (encode-decode a :strip-alpha T :keep-tmp T))
            (c (decode-bmpimage "tmp")))
-      (assert-true (typep a 'rgba-image))
       (assert-true (typep b 'rgb-image))
       (assert-true (typep c 'rgb-image))
       (assert-equal 0 (max-diff b c))))
 
-(run-tests decode-strip-alpha)
-(run-tests encode-strip-alpha)
-
-
-
+;;(run-tests '(decode-strip-alpha))
+;;(run-tests '(encode-strip-alpha))

@@ -4,5 +4,4 @@
   :components ((:file "bmp-test" :depends-on ("lisp-unit"))
 	       (:file "lisp-unit")
 	       )
-  :depends-on (#:image))
-
+  :depends-on (#:png))

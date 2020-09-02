@@ -467,6 +467,3 @@ scale features.
                 (dotimes (c newcols)
                   (dotimes (k colors)
                     (setf (the fixnum (aref new r c k)) (innerprod r c k)))))))))))
-
-
-

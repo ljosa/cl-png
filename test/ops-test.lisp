@@ -9,7 +9,7 @@
 ;;; asdf, provided the asd links have been established:
 
 ;; (asdf:oos 'asdf:load-op :ops-test)
- 
+
 ;;; Some of the tests refer to provided images which must be located
 ;;; as defined in *BMPIMAGES-PATHNAME* as set below.
 ;;;
@@ -19,8 +19,8 @@
 (in-package #:ops-test)
 
 (defparameter *images-pathname*
-  #+asdf (merge-pathnames "images/" 
-                          (truename (asdf:system-definition-pathname 
+  #+asdf (merge-pathnames "images/"
+                          (truename (asdf:system-definition-pathname
                                      '#:ops-test))))
 ;;;## Convenience functions
 (defun make-name (bn tp)
@@ -48,12 +48,12 @@
       (dotimes (c (image-channels a))
         (let ((val (+ (* (image-width a) h) w c)))
           (setf (aref a h w c) val))))))
-    
+
 ;;;# Basic Tests
 ;;;
 ;;; Basic tests are those which will subsequently be used to help
 ;;; verify other functions.
-;;; 
+;;;
 ;;;## Accessor Tests
 (define-test accessor-test
   (let ((a (make-image 111 222 3)))
@@ -73,7 +73,7 @@
 ;;;
 ;;; Creates an image of each type, fills it with an arbitrary pixel
 ;;; value, then checks to see that all are set correctly. Also checks
-;;; the check function by changing one pixel. 
+;;; the check function by changing one pixel.
 (define-test fillv-test
   (flet ((check-for-diff (im val)
            (block found-diff
@@ -119,8 +119,8 @@
 ;;;
 ;;; TBD
 
-;;;# Functions that Combine Images 
-;;; 
+;;;# Functions that Combine Images
+;;;
 ;;;## ADD, ADD*
 ;;;
 ;;; Depends on FLIP, MIRROR, CHANNEL-MIN, CHANNEL-MAX
@@ -199,9 +199,9 @@
 ;;; We will use a convolutional filter with this kernel:
 ;;;
 ;;;  0 -1  0
-;;; -1  4 -1 
+;;; -1  4 -1
 ;;;  0 -1  0
-;;;  
+;;;
 
 (defparameter *edge-kernel*
   (let ((mask (make-array (list 3 3)
@@ -214,7 +214,8 @@
     mask))
 (print *edge-kernel*)
 
-
+;; Disabled because the input file butterfly8-gray.png is missing.
+#+ignore
 (define-test convolve-edge
   (let* ((a (png:decode-file (merge-pathnames "butterfly8-gray.png" *images-pathname*)))
          (c (png:decode-file (merge-pathnames "butterfly8.png" *images-pathname*)))
@@ -236,8 +237,6 @@
 
     (assert-true (typep ec 'rgb-image))))
 
-(run-tests convolve-edge)
+;;(run-tests convolve-edge)
 
 ;; (run-tests)
-
-
