@@ -7,9 +7,9 @@ jobs:
     working_directory: /src/cl-png
 
     steps:
-      - checkout
+      - run: apt-get update -y && apt-get install -y sbcl wget gcc libpng-dev git ssh
 
-      - run: apt-get update -y && apt-get install -y sbcl wget gcc libpng-dev
+      - checkout
 
       - run: wget https://beta.quicklisp.org/quicklisp.lisp
 
