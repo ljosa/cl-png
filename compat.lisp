@@ -23,7 +23,7 @@ function to be removed without further warning."
                  (if (sb-kernel:%array-displaced-p array)
                      (error "~S cannot be used with displaced arrays. Use ~S instead."
                             'array-storage-vector 'array-displacement)
-                     (sb-kernel:%array-data-vector array))
+                     (sb-kernel:%array-data array))
                  array)))
 
 #+allegro
