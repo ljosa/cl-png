@@ -37,7 +37,7 @@ possibly arrays of type simple-array (unsigned-byte 8) (*)."
 ;;; the simple-array to find the pointer to the actual contents.
   (let ((simple-arr (gensym "SIMPLE-ARR")))
     `(excl:with-underlying-simple-vector (,array ,simple-arr)
-       (let ((,ptr-var (ff:fslot-address-typed :unsigned-char 
+       (let ((,ptr-var (ff:fslot-address-typed :unsigned-char
 					       :lisp ,simple-arr)))
 	 ,@body))))
 
@@ -60,13 +60,13 @@ possibly arrays of type simple-array (unsigned-byte 8) (*)."
 				       ,nbytes)
          ;; copy-in
          (loop
-	    for word from 0 
-	    and byte below ,nbytes by ,bytes-per-word 
+	    for word from 0
+	    and byte below ,nbytes by ,bytes-per-word
 	    do (cffi-sys:%mem-set (row-major-aref ,array-var word)
 				  ,ptr-var ,type byte))
          (unwind-protect (progn ,@body)
            ;; copy-out
-           (loop 
+           (loop
 	      for word from 0
 	      and byte below ,nbytes by ,bytes-per-word
 	      do (setf (row-major-aref ,array-var word)
@@ -88,11 +88,9 @@ possibly arrays of type simple-array (unsigned-byte 8) (*)."
 (defmacro with-pointer-to-array-data ((ptr-var array) &body body)
   (let ((v (gensym)))
     `(let ((,v (ccl::array-data-and-offset ,array)))
-       (unless (typep ,v 'ccl::ivector) 
+       (unless (typep ,v 'ccl::ivector)
 	 (ccl::report-bad-arg ,v 'ccl::ivector))
        (ccl::without-gcing
          (ccl:with-macptrs ((,ptr-var))
            (ccl::%vect-data-to-macptr ,v ,ptr-var)
            ,@body)))))
-
-
