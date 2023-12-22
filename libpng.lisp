@@ -8,6 +8,7 @@
 
 (define-foreign-library libpng
   (:darwin "libpng.dylib")
+  (:windows (:or "libpng.dll" "libpng16-16.dll"))
   (t (:default "libpng")))
 
 (use-foreign-library libpng)
