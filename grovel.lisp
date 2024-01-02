@@ -21,6 +21,7 @@
 (constant (+png-filter-type-default+ "PNG_FILTER_TYPE_DEFAULT"))
 (constant (+png-transform-identity+ "PNG_TRANSFORM_IDENTITY"))
 (constant (+png-interlace-none+ "PNG_INTERLACE_NONE"))
+(constant (+png-info-trns+ "PNG_INFO_tRNS"))
 (ctype ssize "ssize_t")
 (ctype size "size_t")
 (ctype png-size "png_size_t")

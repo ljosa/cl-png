@@ -8,6 +8,7 @@
 
 (define-foreign-library libpng
   (:darwin "libpng.dylib")
+  (:windows (:or "libpng.dll" "libpng16-16.dll"))
   (t (:default "libpng")))
 
 (use-foreign-library libpng)
@@ -304,13 +305,21 @@ Signals an error if reading the image fails."
 	    (when (= bit-depth 16)
 	      (png-set-swap png-ptr))
 	    (unless (or preserve-alpha
-			(zerop (logand color-type +png-color-mask-alpha+)))
+			(and (zerop (logand color-type +png-color-mask-alpha+))
+                             (zerop (png-get-valid png-ptr info-ptr +png-info-trns+))))
 	      (png-set-strip-alpha png-ptr))
+            (when (and preserve-alpha
+                       (plusp (png-get-valid png-ptr info-ptr +png-info-trns+)))
+              (png-set-trns-to-alpha png-ptr))
+
         (when swapBGR
           (png-set-bgr png-ptr))
-	(let* ((alphas (if (and preserve-alpha
-				(plusp (logand color-type
-					       +png-color-mask-alpha+)))
+	    (let* ((alphas (if (and preserve-alpha
+				    (or (plusp (logand color-type
+                                                       +png-color-mask-alpha+))
+                                        (plusp
+                                         (png-get-valid png-ptr info-ptr
+                                                        +png-info-trns+))))
 			   1 0))
 	       (image (make-image height width
 				  (+ (if (grayp color-type) 1 3) alphas)
